@@ -37,7 +37,7 @@ from gram.config import RunConfig, load_config
 from gram.data import TokenStore, build_validation_sets
 from gram.elicit import run_elicitation, summarise_elicitation
 from gram.eval import evaluate_profiles, fingerprint
-from gram.train import resolve_device, token_tensor, train
+from gram.train import require_same_config, resolve_device, token_tensor, train
 
 # Losses are means over tens of thousands of predictions, computed in float32.
 # Re-evaluating the same checkpoint on the same machine should agree far better than this.
@@ -111,6 +111,7 @@ def elicit_run(config: RunConfig) -> pd.DataFrame:
 def run(config: RunConfig, stop_after_steps: int | None = None) -> str:
     """Train, evaluate and elicit. Returns "finished" or "interrupted"."""
     run_dir = config.run_dir
+    require_same_config(run_dir, config)
     if (run_dir / "DONE").exists():
         return "finished"
 

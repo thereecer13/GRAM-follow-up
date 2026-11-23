@@ -82,17 +82,28 @@ def preserved_random_state():
 
 
 def group_gradients(
-    model: Transformer, tokens: torch.Tensor, active: Sequence[str]
+    model: Transformer, tokens: torch.Tensor, active: Sequence[str], chunk_size: int | None = None
 ) -> tuple[GroupGradients, float]:
-    """Gradient of the loss on one batch, for every active group, plus the loss itself."""
+    """Gradient of the mean loss on one batch, for every active group, plus that loss.
+
+    The batch is processed ``chunk_size`` sequences at a time. Each piece's loss is weighted
+    by its share of the batch, so the accumulated gradient is exactly the gradient of the
+    mean loss over the whole batch.
+    """
     model.zero_grad(set_to_none=True)
     tokens = tokens.long()
-    loss = next_token_loss(model(tokens[:, :-1], active=active), tokens[:, 1:])
-    loss.backward()
+    chunk_size = len(tokens) if chunk_size is None else chunk_size
+    total_loss = 0.0
+    for start in range(0, len(tokens), chunk_size):
+        chunk = tokens[start : start + chunk_size]
+        share = len(chunk) / len(tokens)
+        loss = next_token_loss(model(chunk[:, :-1], active=active), chunk[:, 1:])
+        (loss * share).backward()
+        total_loss += loss.item() * share
     groups = model.parameter_groups()
     gradients = {name: [parameter.grad.detach().clone() for parameter in groups[name]] for name in active}
     model.zero_grad(set_to_none=True)
-    return gradients, loss.item()
+    return gradients, total_loss
 
 
 def norm(tensors: Sequence[torch.Tensor]) -> float:
@@ -111,6 +122,7 @@ def run_gradient_probes(
     model: Transformer,
     probe_batches: dict[str, tuple[torch.Tensor, torch.Tensor]],
     step: int,
+    chunk_size: int | None = None,
 ) -> list[dict]:
     """Take one set of probe measurements. Returns one row per (topic, parameter group).
 
@@ -129,13 +141,14 @@ def run_gradient_probes(
         # The labeled rule for each module on its own topic's batch B: gradients for the
         # core group and for the module.
         own_labeled = {
-            topic: group_gradients(probe_model, probe_batches[topic][1], (CORE, topic))[0] for topic in aux
+            topic: group_gradients(probe_model, probe_batches[topic][1], (CORE, topic), chunk_size)[0]
+            for topic in aux
         }
 
         rows = []
         for topic, (batch_a, batch_b) in probe_batches.items():
-            unlabeled_a, loss_a = group_gradients(probe_model, batch_a, everything)
-            unlabeled_b, loss_b = group_gradients(probe_model, batch_b, everything)
+            unlabeled_a, loss_a = group_gradients(probe_model, batch_a, everything, chunk_size)
+            unlabeled_b, loss_b = group_gradients(probe_model, batch_b, everything, chunk_size)
 
             for group in everything:
                 grad_norm_a, grad_norm_b = norm(unlabeled_a[group]), norm(unlabeled_b[group])
@@ -165,7 +178,7 @@ def run_gradient_probes(
                         row["cos_unlabeled_vs_labeled"] = cosine(unlabeled_a[CORE], own_labeled[topic][CORE])
                     else:
                         # Topic i's batch B run as if it were labeled with module j.
-                        as_other_module, _ = group_gradients(probe_model, batch_b, (CORE, group))
+                        as_other_module, _ = group_gradients(probe_model, batch_b, (CORE, group), chunk_size)
                         row["cosine_kind"] = "mismatched"
                         row["cos_unlabeled_vs_labeled"] = cosine(unlabeled_a[group], as_other_module[group])
                         row["cos_unlabeled_vs_own_topic_labeled"] = cosine(unlabeled_a[group], own_labeled[group][group])

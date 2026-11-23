@@ -10,6 +10,10 @@ compute-ratio reference, and writes:
     reference.csv           the fitted baseline curve of each dataset
     per_module_ablation.csv for GRAM runs: the effect of ablating single modules
     summary.csv             mean and 90% CI over seeds, per method and label setting
+    runs/<run>/             the small files of every run (configuration, plan, training
+                            metrics, learning curve, gradient probes, losses, elicitation
+                            curves), so that the results directory can be committed and
+                            analysed without the checkpoints
 
 ``--check`` first re-evaluates every run from its saved checkpoint and stops if any
 stored loss is not reproduced. Runs that have never passed this check are listed.
@@ -18,6 +22,7 @@ stored loss is not reproduced. Runs that have never passed this check are listed
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +31,24 @@ from gram.compute_ratio import mean_and_ci90
 from gram.results import build_tables, per_module_ablation, read_runs
 
 HEADLINE = ["cr_core", "cr_retain", "cr_forget", "cr_elicit_code", "cr_elicit_paper"]
+
+# Everything a run writes except its checkpoints, its split manifest and its batch log,
+# which are large and stay in the run directory.
+SMALL_FILES = [
+    "config.yaml", "plan.json", "cells.csv", "train_summary.json", "log.txt",
+    "metrics/train.parquet", "metrics/validation_curve.parquet", "probes/gradient_probes.parquet",
+    "eval/losses.csv", "eval/elicitation.csv", "eval/elicitation_curves.csv", "eval/check.json",
+]
+
+
+def export_small_files(runs_dir: Path, out: Path) -> None:
+    for run in read_runs(runs_dir):
+        for relative in SMALL_FILES:
+            source = run["dir"] / relative
+            if source.exists():
+                target = out / "runs" / run["dir"].name / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, target)
 
 
 def summarise_over_seeds(results: pd.DataFrame) -> pd.DataFrame:
@@ -63,6 +86,7 @@ def main() -> None:
     if (losses.method == "gram").any():
         aux = [column[len("cr_forget_"):] for column in results.columns if column.startswith("cr_forget_")]
         per_module_ablation(losses, aux).to_csv(args.out / "per_module_ablation.csv", index=False)
+    export_small_files(args.runs_dir, args.out)
 
     with pd.option_context("display.width", 200, "display.max_columns", 20):
         print(f"{len(results)} finished runs in {args.runs_dir}; reference pooled over "

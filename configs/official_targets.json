@@ -1,0 +1,1225 @@
+{
+ "_comment": "Numbers derived from the results published in agencyenterprise/modular-pretraining (analysis/stories/stories.csv, commit d07d62e9): the Simple Stories runs behind Table 1 of the paper, three seeds. 'table_1' pools all five capability profiles, as the paper does. 'core_only_profile' is restricted to this project's profile set: every module ablated for core, forget and elicit (for filtering: the single model trained on core data only), and retain = each module switched on alone, scored on its own topic. ci90 is the half-width of the 90% t-interval over the three seed means.",
+ "table_1": {
+  "gram": {
+   "core": {
+    "compute_ratio": {
+     "mean": 0.93746,
+     "ci90": 0.02937,
+     "per_seed": [
+      0.92036,
+      0.93682,
+      0.95519
+     ]
+    },
+    "loss": {
+     "mean": 1.68596,
+     "ci90": 0.00702,
+     "per_seed": [
+      1.69007,
+      1.68608,
+      1.68174
+     ]
+    }
+   },
+   "forget": {
+    "compute_ratio": {
+     "mean": 0.76617,
+     "ci90": 0.01705,
+     "per_seed": [
+      0.75798,
+      0.76305,
+      0.77747
+     ]
+    },
+    "loss": {
+     "mean": 1.77348,
+     "ci90": 0.0053,
+     "per_seed": [
+      1.77566,
+      1.77491,
+      1.76988
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.61511,
+       "ci90": 0.02814,
+       "per_seed": [
+        0.6193,
+        0.59672,
+        0.6293
+       ]
+      },
+      "loss": {
+       "mean": 1.87829,
+       "ci90": 0.01123,
+       "per_seed": [
+        1.87656,
+        1.88564,
+        1.87266
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.69041,
+       "ci90": 0.0152,
+       "per_seed": [
+        0.68124,
+        0.69072,
+        0.69927
+       ]
+      },
+      "loss": {
+       "mean": 1.73491,
+       "ci90": 0.00516,
+       "per_seed": [
+        1.73802,
+        1.73479,
+        1.73191
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.90378,
+       "ci90": 0.02275,
+       "per_seed": [
+        0.8897,
+        0.90503,
+        0.91661
+       ]
+      },
+      "loss": {
+       "mean": 1.71483,
+       "ci90": 0.00576,
+       "per_seed": [
+        1.7184,
+        1.71449,
+        1.71159
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.85537,
+       "ci90": 0.02042,
+       "per_seed": [
+        0.84168,
+        0.85972,
+        0.8647
+       ]
+      },
+      "loss": {
+       "mean": 1.7659,
+       "ci90": 0.00557,
+       "per_seed": [
+        1.76963,
+        1.7647,
+        1.76336
+       ]
+      }
+     }
+    }
+   },
+   "elicit": {
+    "compute_ratio": {
+     "mean": 0.8554,
+     "ci90": 0.02416,
+     "per_seed": [
+      0.84208,
+      0.85355,
+      0.87056
+     ]
+    },
+    "loss": {
+     "mean": 1.74509,
+     "ci90": 0.00646,
+     "per_seed": [
+      1.74859,
+      1.7457,
+      1.74099
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.77977,
+       "ci90": 0.02431,
+       "per_seed": [
+        0.77737,
+        0.76671,
+        0.79524
+       ]
+      },
+      "loss": {
+       "mean": 1.82122,
+       "ci90": 0.00736,
+       "per_seed": [
+        1.82192,
+        1.8252,
+        1.81655
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.83857,
+       "ci90": 0.02598,
+       "per_seed": [
+        0.82306,
+        0.83878,
+        0.85388
+       ]
+      },
+      "loss": {
+       "mean": 1.69,
+       "ci90": 0.00706,
+       "per_seed": [
+        1.69423,
+        1.68992,
+        1.68586
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.91091,
+       "ci90": 0.03047,
+       "per_seed": [
+        0.89242,
+        0.91178,
+        0.92854
+       ]
+      },
+      "loss": {
+       "mean": 1.71304,
+       "ci90": 0.00765,
+       "per_seed": [
+        1.7177,
+        1.71279,
+        1.70863
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.89234,
+       "ci90": 0.02544,
+       "per_seed": [
+        0.87548,
+        0.89695,
+        0.90459
+       ]
+      },
+      "loss": {
+       "mean": 1.7561,
+       "ci90": 0.00661,
+       "per_seed": [
+        1.76049,
+        1.75488,
+        1.75293
+       ]
+      }
+     }
+    }
+   },
+   "retain": {
+    "compute_ratio": {
+     "mean": 0.95221,
+     "ci90": 0.02983,
+     "per_seed": [
+      0.93328,
+      0.95503,
+      0.96833
+     ]
+    },
+    "loss": {
+     "mean": 1.72013,
+     "ci90": 0.00709,
+     "per_seed": [
+      1.72463,
+      1.71943,
+      1.71631
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.96565,
+       "ci90": 0.02008,
+       "per_seed": [
+        0.95203,
+        0.97081,
+        0.97412
+       ]
+      },
+      "loss": {
+       "mean": 1.77135,
+       "ci90": 0.0048,
+       "per_seed": [
+        1.77461,
+        1.77012,
+        1.76934
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.98797,
+       "ci90": 0.047,
+       "per_seed": [
+        0.95869,
+        0.99102,
+        1.0142
+       ]
+      },
+      "loss": {
+       "mean": 1.6531,
+       "ci90": 0.01063,
+       "per_seed": [
+        1.65975,
+        1.65234,
+        1.6472
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.92629,
+       "ci90": 0.02181,
+       "per_seed": [
+        0.91197,
+        0.92975,
+        0.93714
+       ]
+      },
+      "loss": {
+       "mean": 1.7092,
+       "ci90": 0.00539,
+       "per_seed": [
+        1.71274,
+        1.70833,
+        1.70653
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.92894,
+       "ci90": 0.03154,
+       "per_seed": [
+        0.91044,
+        0.92852,
+        0.94786
+       ]
+      },
+      "loss": {
+       "mean": 1.74685,
+       "ci90": 0.0078,
+       "per_seed": [
+        1.75144,
+        1.74692,
+        1.74219
+       ]
+      }
+     }
+    }
+   }
+  },
+  "filtering": {
+   "core": {
+    "compute_ratio": {
+     "mean": 0.96096,
+     "ci90": 0.01448,
+     "per_seed": [
+      0.95345,
+      0.95912,
+      0.97033
+     ]
+    },
+    "loss": {
+     "mean": 1.68043,
+     "ci90": 0.00333,
+     "per_seed": [
+      1.68216,
+      1.68083,
+      1.67828
+     ]
+    }
+   },
+   "forget": {
+    "compute_ratio": {
+     "mean": 0.78023,
+     "ci90": 0.00863,
+     "per_seed": [
+      0.777,
+      0.77756,
+      0.78613
+     ]
+    },
+    "loss": {
+     "mean": 1.76869,
+     "ci90": 0.00255,
+     "per_seed": [
+      1.76957,
+      1.76955,
+      1.76695
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.64866,
+       "ci90": 0.00709,
+       "per_seed": [
+        0.64607,
+        0.64641,
+        0.65352
+       ]
+      },
+      "loss": {
+       "mean": 1.86533,
+       "ci90": 0.00257,
+       "per_seed": [
+        1.86626,
+        1.86616,
+        1.86357
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.69549,
+       "ci90": 0.00936,
+       "per_seed": [
+        0.69473,
+        0.69035,
+        0.70138
+       ]
+      },
+      "loss": {
+       "mean": 1.73321,
+       "ci90": 0.00314,
+       "per_seed": [
+        1.73345,
+        1.73494,
+        1.73124
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.91501,
+       "ci90": 0.01305,
+       "per_seed": [
+        0.90662,
+        0.91655,
+        0.92187
+       ]
+      },
+      "loss": {
+       "mean": 1.71202,
+       "ci90": 0.00322,
+       "per_seed": [
+        1.71409,
+        1.71164,
+        1.71034
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.86175,
+       "ci90": 0.0093,
+       "per_seed": [
+        0.86059,
+        0.85691,
+        0.86775
+       ]
+      },
+      "loss": {
+       "mean": 1.7642,
+       "ci90": 0.00242,
+       "per_seed": [
+        1.76449,
+        1.76547,
+        1.76264
+       ]
+      }
+     }
+    }
+   },
+   "elicit": {
+    "compute_ratio": {
+     "mean": 0.87018,
+     "ci90": 0.01172,
+     "per_seed": [
+      0.86449,
+      0.86812,
+      0.87793
+     ]
+    },
+    "loss": {
+     "mean": 1.74097,
+     "ci90": 0.00302,
+     "per_seed": [
+      1.74242,
+      1.74152,
+      1.73896
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.81591,
+       "ci90": 0.00962,
+       "per_seed": [
+        0.81194,
+        0.81334,
+        0.82245
+       ]
+      },
+      "loss": {
+       "mean": 1.81056,
+       "ci90": 0.00268,
+       "per_seed": [
+        1.81167,
+        1.81128,
+        1.80874
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.84329,
+       "ci90": 0.01125,
+       "per_seed": [
+        0.84001,
+        0.83889,
+        0.85097
+       ]
+      },
+      "loss": {
+       "mean": 1.68873,
+       "ci90": 0.00301,
+       "per_seed": [
+        1.68961,
+        1.68992,
+        1.68668
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.92203,
+       "ci90": 0.01618,
+       "per_seed": [
+        0.91139,
+        0.92466,
+        0.93004
+       ]
+      },
+      "loss": {
+       "mean": 1.71029,
+       "ci90": 0.00396,
+       "per_seed": [
+        1.71289,
+        1.70964,
+        1.70833
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.8995,
+       "ci90": 0.01284,
+       "per_seed": [
+        0.89464,
+        0.89559,
+        0.90828
+       ]
+      },
+      "loss": {
+       "mean": 1.75428,
+       "ci90": 0.00318,
+       "per_seed": [
+        1.7555,
+        1.75524,
+        1.75211
+       ]
+      }
+     }
+    }
+   },
+   "retain": {
+    "compute_ratio": {
+     "mean": 0.96211,
+     "ci90": 0.02394,
+     "per_seed": [
+      0.95181,
+      0.95621,
+      0.97832
+     ]
+    },
+    "loss": {
+     "mean": 1.71772,
+     "ci90": 0.00566,
+     "per_seed": [
+      1.72018,
+      1.71909,
+      1.7139
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.95211,
+       "ci90": 0.02384,
+       "per_seed": [
+        0.95284,
+        0.93762,
+        0.96587
+       ]
+      },
+      "loss": {
+       "mean": 1.77461,
+       "ci90": 0.00577,
+       "per_seed": [
+        1.77441,
+        1.77813,
+        1.77129
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.98893,
+       "ci90": 0.01783,
+       "per_seed": [
+        0.98282,
+        0.98282,
+        1.00114
+       ]
+      },
+      "loss": {
+       "mean": 1.65282,
+       "ci90": 0.004,
+       "per_seed": [
+        1.65419,
+        1.65419,
+        1.65008
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.96215,
+       "ci90": 0.03596,
+       "per_seed": [
+        0.9538,
+        0.94626,
+        0.98639
+       ]
+      },
+      "loss": {
+       "mean": 1.70059,
+       "ci90": 0.00842,
+       "per_seed": [
+        1.70252,
+        1.70433,
+        1.69491
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.94526,
+       "ci90": 0.04013,
+       "per_seed": [
+        0.91779,
+        0.95813,
+        0.95985
+       ]
+      },
+      "loss": {
+       "mean": 1.74287,
+       "ci90": 0.00981,
+       "per_seed": [
+        1.74959,
+        1.73972,
+        1.73931
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "core_only_profile": {
+  "gram": {
+   "core": {
+    "compute_ratio": {
+     "mean": 0.94009,
+     "ci90": 0.02956,
+     "per_seed": [
+      0.92266,
+      0.93988,
+      0.95773
+     ]
+    },
+    "loss": {
+     "mean": 1.68533,
+     "ci90": 0.00705,
+     "per_seed": [
+      1.6895,
+      1.68535,
+      1.68114
+     ]
+    }
+   },
+   "forget": {
+    "compute_ratio": {
+     "mean": 0.76426,
+     "ci90": 0.01658,
+     "per_seed": [
+      0.75594,
+      0.76174,
+      0.77511
+     ]
+    },
+    "loss": {
+     "mean": 1.77407,
+     "ci90": 0.00519,
+     "per_seed": [
+      1.77633,
+      1.77532,
+      1.77057
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.61206,
+       "ci90": 0.02713,
+       "per_seed": [
+        0.61533,
+        0.59459,
+        0.62627
+       ]
+      },
+      "loss": {
+       "mean": 1.87949,
+       "ci90": 0.01089,
+       "per_seed": [
+        1.87812,
+        1.88652,
+        1.87383
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.69117,
+       "ci90": 0.01585,
+       "per_seed": [
+        0.68169,
+        0.69132,
+        0.7005
+       ]
+      },
+      "loss": {
+       "mean": 1.73465,
+       "ci90": 0.00537,
+       "per_seed": [
+        1.73787,
+        1.73458,
+        1.7315
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.90276,
+       "ci90": 0.02072,
+       "per_seed": [
+        0.88989,
+        0.90401,
+        0.91437
+       ]
+      },
+      "loss": {
+       "mean": 1.71508,
+       "ci90": 0.00526,
+       "per_seed": [
+        1.71835,
+        1.71474,
+        1.71214
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.85107,
+       "ci90": 0.02087,
+       "per_seed": [
+        0.83684,
+        0.85705,
+        0.85933
+       ]
+      },
+      "loss": {
+       "mean": 1.76706,
+       "ci90": 0.00573,
+       "per_seed": [
+        1.77097,
+        1.76542,
+        1.7648
+       ]
+      }
+     }
+    }
+   },
+   "elicit": {
+    "compute_ratio": {
+     "mean": 0.85479,
+     "ci90": 0.02366,
+     "per_seed": [
+      0.84183,
+      0.85283,
+      0.8697
+     ]
+    },
+    "loss": {
+     "mean": 1.74526,
+     "ci90": 0.00633,
+     "per_seed": [
+      1.74865,
+      1.74591,
+      1.74122
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.77892,
+       "ci90": 0.02504,
+       "per_seed": [
+        0.77753,
+        0.76481,
+        0.79442
+       ]
+      },
+      "loss": {
+       "mean": 1.82148,
+       "ci90": 0.00759,
+       "per_seed": [
+        1.82187,
+        1.82578,
+        1.8168
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.83845,
+       "ci90": 0.02613,
+       "per_seed": [
+        0.82287,
+        0.83859,
+        0.85388
+       ]
+      },
+      "loss": {
+       "mean": 1.69004,
+       "ci90": 0.00711,
+       "per_seed": [
+        1.69428,
+        1.68997,
+        1.68586
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.9113,
+       "ci90": 0.0303,
+       "per_seed": [
+        0.89301,
+        0.91197,
+        0.92893
+       ]
+      },
+      "loss": {
+       "mean": 1.71294,
+       "ci90": 0.0076,
+       "per_seed": [
+        1.71755,
+        1.71274,
+        1.70853
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.89048,
+       "ci90": 0.02463,
+       "per_seed": [
+        0.87392,
+        0.89595,
+        0.90156
+       ]
+      },
+      "loss": {
+       "mean": 1.75658,
+       "ci90": 0.00642,
+       "per_seed": [
+        1.7609,
+        1.75514,
+        1.7537
+       ]
+      }
+     }
+    }
+   },
+   "retain": {
+    "compute_ratio": {
+     "mean": 0.95221,
+     "ci90": 0.02983,
+     "per_seed": [
+      0.93328,
+      0.95503,
+      0.96833
+     ]
+    },
+    "loss": {
+     "mean": 1.72013,
+     "ci90": 0.00709,
+     "per_seed": [
+      1.72463,
+      1.71943,
+      1.71631
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.96565,
+       "ci90": 0.02008,
+       "per_seed": [
+        0.95203,
+        0.97081,
+        0.97412
+       ]
+      },
+      "loss": {
+       "mean": 1.77135,
+       "ci90": 0.0048,
+       "per_seed": [
+        1.77461,
+        1.77012,
+        1.76934
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.98797,
+       "ci90": 0.047,
+       "per_seed": [
+        0.95869,
+        0.99102,
+        1.0142
+       ]
+      },
+      "loss": {
+       "mean": 1.6531,
+       "ci90": 0.01063,
+       "per_seed": [
+        1.65975,
+        1.65234,
+        1.6472
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.92629,
+       "ci90": 0.02181,
+       "per_seed": [
+        0.91197,
+        0.92975,
+        0.93714
+       ]
+      },
+      "loss": {
+       "mean": 1.7092,
+       "ci90": 0.00539,
+       "per_seed": [
+        1.71274,
+        1.70833,
+        1.70653
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.92894,
+       "ci90": 0.03154,
+       "per_seed": [
+        0.91044,
+        0.92852,
+        0.94786
+       ]
+      },
+      "loss": {
+       "mean": 1.74685,
+       "ci90": 0.0078,
+       "per_seed": [
+        1.75144,
+        1.74692,
+        1.74219
+       ]
+      }
+     }
+    }
+   }
+  },
+  "filtering": {
+   "core": {
+    "compute_ratio": {
+     "mean": 0.94579,
+     "ci90": 0.01907,
+     "per_seed": [
+      0.95081,
+      0.95372,
+      0.93284
+     ]
+    },
+    "loss": {
+     "mean": 1.68396,
+     "ci90": 0.00453,
+     "per_seed": [
+      1.68276,
+      1.68208,
+      1.68704
+     ]
+    }
+   },
+   "forget": {
+    "compute_ratio": {
+     "mean": 0.76722,
+     "ci90": 0.01395,
+     "per_seed": [
+      0.77418,
+      0.76941,
+      0.75807
+     ]
+    },
+    "loss": {
+     "mean": 1.77253,
+     "ci90": 0.00439,
+     "per_seed": [
+      1.77023,
+      1.772,
+      1.77536
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.63696,
+       "ci90": 0.01596,
+       "per_seed": [
+        0.64619,
+        0.63742,
+        0.62727
+       ]
+      },
+      "loss": {
+       "mean": 1.86973,
+       "ci90": 0.0061,
+       "per_seed": [
+        1.86621,
+        1.86953,
+        1.87344
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.68934,
+       "ci90": 0.01374,
+       "per_seed": [
+        0.69865,
+        0.68589,
+        0.68348
+       ]
+      },
+      "loss": {
+       "mean": 1.73527,
+       "ci90": 0.00465,
+       "per_seed": [
+        1.73211,
+        1.73643,
+        1.73725
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.89878,
+       "ci90": 0.01451,
+       "per_seed": [
+        0.90164,
+        0.9056,
+        0.88911
+       ]
+      },
+      "loss": {
+       "mean": 1.71608,
+       "ci90": 0.0037,
+       "per_seed": [
+        1.71534,
+        1.71434,
+        1.71855
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.84381,
+       "ci90": 0.01667,
+       "per_seed": [
+        0.85025,
+        0.84875,
+        0.83242
+       ]
+      },
+      "loss": {
+       "mean": 1.76905,
+       "ci90": 0.00462,
+       "per_seed": [
+        1.76727,
+        1.76768,
+        1.7722
+       ]
+      }
+     }
+    }
+   },
+   "elicit": {
+    "compute_ratio": {
+     "mean": 0.85454,
+     "ci90": 0.01559,
+     "per_seed": [
+      0.86048,
+      0.85925,
+      0.84389
+     ]
+    },
+    "loss": {
+     "mean": 1.74513,
+     "ci90": 0.00423,
+     "per_seed": [
+      1.74349,
+      1.74388,
+      1.74802
+     ]
+    },
+    "per_topic": {
+     "a-deadline-or-time-limit": {
+      "compute_ratio": {
+       "mean": 0.79621,
+       "ci90": 0.01585,
+       "per_seed": [
+        0.80435,
+        0.79837,
+        0.78592
+       ]
+      },
+      "loss": {
+       "mean": 1.81628,
+       "ci90": 0.00471,
+       "per_seed": [
+        1.81387,
+        1.81562,
+        1.81934
+       ]
+      }
+     },
+     "alien-encounters": {
+      "compute_ratio": {
+       "mean": 0.8356,
+       "ci90": 0.01287,
+       "per_seed": [
+        0.84238,
+        0.83708,
+        0.82733
+       ]
+      },
+      "loss": {
+       "mean": 1.69079,
+       "ci90": 0.00352,
+       "per_seed": [
+        1.68894,
+        1.69038,
+        1.69305
+       ]
+      }
+     },
+     "bygone-eras": {
+      "compute_ratio": {
+       "mean": 0.90484,
+       "ci90": 0.01537,
+       "per_seed": [
+        0.90798,
+        0.91197,
+        0.89457
+       ]
+      },
+      "loss": {
+       "mean": 1.71454,
+       "ci90": 0.00389,
+       "per_seed": [
+        1.71374,
+        1.71274,
+        1.71715
+       ]
+      }
+     },
+     "cultural-traditions": {
+      "compute_ratio": {
+       "mean": 0.88152,
+       "ci90": 0.02021,
+       "per_seed": [
+        0.88722,
+        0.88959,
+        0.86774
+       ]
+      },
+      "loss": {
+       "mean": 1.75891,
+       "ci90": 0.00533,
+       "per_seed": [
+        1.7574,
+        1.75678,
+        1.76254
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "baseline_final_loss": {
+  "core": 1.6715,
+  "a-deadline-or-time-limit": 1.7633,
+  "alien-encounters": 1.6504,
+  "bygone-eras": 1.6918,
+  "cultural-traditions": 1.73,
+  "_comment": "mean over the three official baseline seeds"
+ }
+}

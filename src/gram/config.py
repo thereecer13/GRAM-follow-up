@@ -51,7 +51,7 @@ class DataConfig:
     # The official code gives every topic a token budget equal to the *mean* topic size
     # of its class (the 44 core topics, or the 4 auxiliary ones), and drops what a topic
     # has beyond that. It removes just under 1% of the training data and makes one epoch
-    # 16,544 steps. The paper says training uses "all available data" (DEVIATIONS 1.5).
+    # 16,544 steps. The paper says training uses "all available data" (DEVIATIONS 1.8).
     cap_topics_at_class_mean: bool = True
     # How sequences are grouped into batches inside one label pool:
     #   "single_topic": every batch holds sequences of one true topic. This is what the
@@ -195,6 +195,10 @@ class ProbeConfig:
     enabled: bool = True
     # Gradient probes are taken at this many evenly spaced points (5%, 10%, ..., 100%).
     num_points: int = 20
+    # A probe batch is pushed through the model this many sequences at a time, and the
+    # pieces' gradients are added up. The result is the gradient of the whole batch; the
+    # only effect is on memory, which matters because probes run in float32.
+    chunk_size: int = 32
 
 
 @dataclass

@@ -61,7 +61,7 @@ from gram.checkpoint import (
     save_checkpoint,
     step_checkpoint_path,
 )
-from gram.config import CORE, UNLABELED, OptimConfig, RunConfig, save_config
+from gram.config import CORE, UNLABELED, OptimConfig, RunConfig, config_to_dict, load_config, save_config
 from gram.data import (
     TokenStore,
     TrainingData,
@@ -308,6 +308,73 @@ def write_run_inputs(run_dir: Path, config: RunConfig, setup: TrainingSetup, pla
     )
 
 
+# Settings that may differ between two invocations of the same run without changing its results.
+IRRELEVANT_TO_RESULTS = {
+    "device",
+    "output_dir",
+    "data.store_dir",
+    "eval.batch_size",
+    "optim.compile",
+    "checkpoints.resume_every_steps",
+    "probes.chunk_size",
+}
+
+
+def _flatten(value, prefix: str = "") -> dict:
+    """{"optim": {"lr": 1}} -> {"optim.lr": 1}"""
+    if not isinstance(value, dict):
+        return {prefix.rstrip("."): value}
+    flat = {}
+    for key, item in value.items():
+        flat.update(_flatten(item, f"{prefix}{key}."))
+    return flat
+
+
+def require_same_config(run_dir: Path, config: RunConfig) -> None:
+    """Refuse to continue a run directory that was created with different settings.
+
+    Without this, editing a configuration file and running it again under the same name
+    would resume the old run, or report its old results, as if they belonged to the new
+    settings.
+    """
+    saved_path = run_dir / "config.yaml"
+    if not saved_path.exists():
+        return
+    saved = _flatten(config_to_dict(load_config(saved_path)))
+    current = _flatten(config_to_dict(config))
+    differing = sorted(
+        key
+        for key in saved.keys() | current.keys()
+        if key not in IRRELEVANT_TO_RESULTS and saved.get(key) != current.get(key)
+    )
+    if differing:
+        raise ValueError(
+            f"{run_dir} was created with a different configuration (differs in: {', '.join(differing)}). "
+            "Give the new run a different name, or delete the old run directory."
+        )
+
+
+def small_cell_warnings(data: TrainingData, micro_batch_size: int, assembly: str) -> list[str]:
+    """Label cells that lose much of their data to incomplete batches.
+
+    With ``single_topic`` batches, every (given label, true topic) cell is batched on its
+    own, and a cell smaller than one batch contributes nothing at all. That is harmless
+    for the 48 large cells of perfectly labeled data, and fatal for small cells such as
+    "core stories of topic X that were wrongly given an auxiliary label".
+    """
+    if assembly != "single_topic":
+        return []
+    warnings = []
+    for cell in data.cells:
+        unused = cell.num_sequences % micro_batch_size
+        if cell.num_sequences > 0 and unused / cell.num_sequences > 0.25:
+            warnings.append(
+                f"given label {cell.given_label!r}, true topic {cell.topic!r}: {cell.num_sequences} sequences, "
+                f"{unused} of them ({unused / cell.num_sequences:.0%}) never trained on"
+            )
+    return warnings
+
+
 # --------------------------------------------------------------------------- #
 # Bookkeeping that survives interruptions
 # --------------------------------------------------------------------------- #
@@ -392,6 +459,7 @@ def train(config: RunConfig, stop_after_steps: int | None = None) -> str:
     config.validate()
     run_dir = config.run_dir
     run_dir.mkdir(parents=True, exist_ok=True)
+    require_same_config(run_dir, config)
     if final_checkpoint_path(run_dir).exists():
         return "finished"
 
@@ -405,9 +473,9 @@ def train(config: RunConfig, stop_after_steps: int | None = None) -> str:
 
 def _train(config: RunConfig, run_dir: Path, logger: logging.Logger, stop: StopSignal, stop_after_steps: int | None) -> str:
     device = resolve_device(config.device)
-    if device.type == "cuda":
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
+    # TF32 is deliberately left off. The official code switches it on, but it only affects
+    # float32 matrix products, of which a bfloat16 model has none; it would however lower the
+    # precision of the gradient probes, which do run in float32.
 
     # ----- model, data, plan. All of it follows from the configuration and the seed.
     torch.manual_seed(config.seed)
@@ -423,7 +491,16 @@ def _train(config: RunConfig, run_dir: Path, logger: logging.Logger, stop: StopS
     checkpoint_at = spaced_checkpoint_steps(total_steps, config.checkpoints.num_spaced)
     probe_at = probe_steps(total_steps, config.probes.num_points) if config.probes.enabled else []
     sweep_at = curve_steps(total_steps, config.eval.curve_points) if config.eval.curve_points > 0 else []
-    write_run_inputs(run_dir, config, setup, describe_plan(setup, config, checkpoint_at, probe_at))
+    plan_description = describe_plan(setup, config, checkpoint_at, probe_at)
+    plan_description["warnings"] = small_cell_warnings(setup.data, config.optim.micro_batch_size, config.data.batch_assembly)
+    write_run_inputs(run_dir, config, setup, plan_description)
+    if plan_description["warnings"]:
+        logger.warning(
+            f"WARNING: {len(plan_description['warnings'])} label cell(s) lose more than a quarter of their data to "
+            'incomplete single-topic batches. Consider data.batch_assembly: "mixed". The first few:'
+        )
+        for line in plan_description["warnings"][:5]:
+            logger.warning(f"  {line}")
 
     model.to(device=device, dtype=parameter_dtype(config.optim.precision))
     optimizers = make_optimizers(model, config.optim)
@@ -527,7 +604,7 @@ def _train(config: RunConfig, run_dir: Path, logger: logging.Logger, stop: StopS
                 )
             )
         if step in probe_at:
-            probe_metrics.extend(run_gradient_probes(model, probe_batches, step))
+            probe_metrics.extend(run_gradient_probes(model, probe_batches, step, config.probes.chunk_size))
         seconds_measuring += time.time() - tick
 
         # Checkpoints.

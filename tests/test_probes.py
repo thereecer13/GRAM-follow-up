@@ -194,3 +194,23 @@ def test_group_gradients_only_returns_active_groups(probe_batches):
 def test_probe_steps_end_with_the_last_step():
     assert probe_steps(1000, 20) == list(range(50, 1001, 50))
     assert probe_steps(7, 20) == [1, 2, 3, 4, 5, 6, 7], "never more probe points than steps, never step 0"
+
+
+def test_chunking_a_probe_batch_does_not_change_the_gradient(probe_batches):
+    """Chunks only bound memory: the accumulated gradient is that of the whole batch."""
+    model, _ = trained_model()
+    batch = probe_batches[AUX[0]][0]
+    whole, whole_loss = group_gradients(model, batch, ALL)
+    for chunk_size in (1, 3, 4):  # 3 leaves a last chunk of a different size
+        chunked, chunked_loss = group_gradients(model, batch, ALL, chunk_size)
+        assert chunked_loss == pytest.approx(whole_loss, rel=1e-6)
+        for group in ALL:
+            assert cosine(whole[group], chunked[group]) == pytest.approx(1.0, abs=1e-6)
+            assert norm(chunked[group]) == pytest.approx(norm(whole[group]), rel=1e-5)
+
+    rows = run_gradient_probes(model, probe_batches, step=6)
+    chunked_rows = run_gradient_probes(model, probe_batches, step=6, chunk_size=3)
+    for row, chunked_row in zip(rows, chunked_rows):
+        for key, value in row.items():
+            if isinstance(value, float) and not np.isnan(value):
+                assert chunked_row[key] == pytest.approx(value, rel=1e-4, abs=1e-6), key

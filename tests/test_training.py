@@ -11,7 +11,7 @@ from helpers import AUX, make_store, tiny_run_config
 from gram.checkpoint import final_checkpoint_path, latest_checkpoint_path, load_checkpoint, model_from_checkpoint
 from gram.config import CORE, UNLABELED, OptimConfig, load_config
 from gram.probes import probe_steps
-from gram.train import curve_steps, learning_rate, spaced_checkpoint_steps, train
+from gram.train import curve_steps, learning_rate, small_cell_warnings, spaced_checkpoint_steps, train
 
 
 @pytest.fixture(scope="module")
@@ -269,3 +269,85 @@ def test_filtering_trains_on_core_and_unlabeled_data_only(workspace):
     removed = manifest[(manifest.true_label == CORE) & (manifest.given_label != CORE) & (manifest.first_sequence >= 0)]
     assert len(removed) > 50
     assert not np.isin(removed.first_sequence, trained_rows).any(), "core stories given an auxiliary label are filtered out"
+
+
+# ------------------------------------------------------------------- safeguards
+
+
+def test_a_run_directory_cannot_be_reused_with_different_settings(workspace, finished_gram):
+    changed = config_for(workspace, "gram_reference", routing__p_as=0.5)
+    with pytest.raises(ValueError, match="different configuration.*routing.p_as"):
+        train(changed)
+    other_seed = config_for(workspace, "gram_reference", seed=7)
+    with pytest.raises(ValueError, match="differs in: seed"):
+        train(other_seed)
+
+    # Settings that cannot change the results may differ: the run is simply recognised as finished.
+    harmless = config_for(workspace, "gram_reference", eval__batch_size=3, checkpoints__resume_every_steps=11)
+    harmless.device = "auto"
+    assert train(harmless) == "finished"
+
+
+def test_an_interrupted_run_cannot_be_continued_with_different_settings(workspace):
+    config = config_for(workspace, "gram_changed_midway")
+    assert train(config, stop_after_steps=20) == "interrupted"
+    changed = config_for(workspace, "gram_changed_midway", optim__weight_decay=0.1)
+    with pytest.raises(ValueError, match="optim.weight_decay"):
+        train(changed)
+    assert train(config) == "finished"
+
+
+def test_single_topic_batches_warn_when_small_label_cells_lose_their_data(workspace):
+    """At a low false-positive rate every (auxiliary label, core topic) cell is smaller than one
+    batch, so single-topic batching would silently train on none of the mislabeled stories."""
+    settings = dict(labels__noise="false_positive", labels__noise_rate=0.05, probes__enabled=False)
+    single = config_for(workspace, "warn_single_topic", data__batch_assembly="single_topic", **settings)
+    mixed = config_for(workspace, "warn_mixed", data__batch_assembly="mixed", **settings)
+    assert train(single) == "finished" and train(mixed) == "finished"
+
+    warnings = json.loads((single.run_dir / "plan.json").read_text())["warnings"]
+    assert len(warnings) >= 4 and all("never trained on" in line for line in warnings)
+    assert "WARNING" in (single.run_dir / "log.txt").read_text()
+    assert json.loads((mixed.run_dir / "plan.json").read_text())["warnings"] == []
+
+    def mislabeled_stories_trained(config):
+        manifest = pd.read_parquet(config.run_dir / "manifest.parquet")
+        trained = np.unique(np.load(config.run_dir / "batch_log.npz")["sequence_rows"])
+        wrong = manifest[(manifest.true_label == CORE) & (manifest.given_label != CORE) & (manifest.first_sequence >= 0)]
+        return np.isin(wrong.first_sequence, trained).mean()
+
+    assert mislabeled_stories_trained(mixed) > 0.9
+    assert mislabeled_stories_trained(single) < 0.5
+
+
+# ------------------------------------------------------- bfloat16, as the real runs
+
+
+def test_bfloat16_run_checkpoints_resumes_and_re_evaluates_exactly(workspace):
+    """The real runs keep parameters, gradients and optimizer state in bfloat16. Everything that
+    was tested above in float32 must also hold there: checkpoints round-trip, an interrupted run
+    resumes to the identical result, and the saved model reproduces the trained one."""
+    from gram.run import evaluate_run, run
+
+    settings = dict(optim__precision="bf16", elicit__enabled=False)
+    straight = config_for(workspace, "bf16_straight", **settings)
+    resumed = config_for(workspace, "bf16_resumed", **settings)
+    assert run(straight) == "finished"
+    assert run(resumed, stop_after_steps=41) == "interrupted"
+    assert run(resumed) == "finished"
+
+    first = load_checkpoint(final_checkpoint_path(straight.run_dir))
+    assert all(value.dtype == torch.bfloat16 for value in first["model"].values())
+    for group in first["optimizers"].values():
+        assert all(state["exp_avg"].dtype == torch.bfloat16 for state in group["state"].values())
+    assert_same_checkpoint(first, load_checkpoint(final_checkpoint_path(resumed.run_dir)))
+
+    model, _, _ = model_from_checkpoint(final_checkpoint_path(straight.run_dir))
+    assert next(model.parameters()).dtype == torch.bfloat16
+    evaluate_run(straight, check=True)  # raises if the checkpoint does not reproduce the stored losses
+    assert json.loads((straight.run_dir / "eval" / "check.json").read_text())["largest_difference"] == 0.0
+
+    metrics = pd.read_parquet(straight.run_dir / "metrics" / "train.parquet")
+    assert metrics.loss.iloc[-20:].mean() < metrics.loss.iloc[:20].mean() - 0.5, "the bfloat16 model learns"
+    probes = pd.read_parquet(straight.run_dir / "probes" / "gradient_probes.parquet")
+    assert np.isfinite(probes.relative_grad_norm_a).all() and (probes.relative_grad_norm_a > 0).all()

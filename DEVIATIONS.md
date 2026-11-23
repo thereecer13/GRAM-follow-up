@@ -1,272 +1,376 @@
 # DEVIATIONS
 
 Every place where this reproduction departs from "Modular Pretraining Enables Access
-Control" (Roland et al., ICML 2026; arXiv:2607.08077), where the paper is unspecified,
-or where the paper disagrees with itself or with the authors' released code.
+Control" (Roland et al., ICML 2026; arXiv:2607.08077), where the paper is unspecified, or
+where the paper disagrees with itself or with the authors' released code.
 
-Status key: **OPEN** = awaiting a decision from Reece. **DECIDED** = settled, reason given.
-
-Sources referred to below:
+Status: **OPEN** = waiting for a decision from Reece. **DECIDED** = settled, reason given.
 
 | Tag | Meaning |
 |---|---|
 | `PAPER` | arXiv:2607.08077 (`GRAM.pdf` in this repo, downloaded from arxiv.org 2026-11-22) |
-| `CODE` | Official repo `agencyenterprise/modular-pretraining`, default branch, read 2026-11-22 |
-| `RUNCFG` | `config.json` recorded inside `CODE`'s own `results/stories/seed_*/` run directories |
-| `AGG` | `CODE`'s `analysis/stories/stories_agg_summary.csv` (reproduces PAPER Table 1 to 4 d.p.) |
+| `CODE` | Official repo `agencyenterprise/modular-pretraining`, commit `d07d62e9` (2026-07-09) |
+| `RUNCFG` | `config.json` / `training.log` recorded in `CODE`'s own `results/stories/seed_*/` run directories |
+| `AGG` | `CODE`'s `analysis/stories/stories.csv` and `stories_agg_summary.csv` (reproduce `PAPER` Table 1) |
 
 ---
 
 ## 0. Premise change: official code exists
 
-The task brief said "I found no released code in the paper". That is true of the paper and
-its arXiv page — the arXiv abstract page for 2607.08077 has **no Comments field and no code
-link**, and the PDF advertises no repository. However an official implementation does exist:
+The brief said "I found no released code in the paper". That is true of the paper and of
+its arXiv page (no Comments field, no code link). An official implementation does exist,
+found by web search: **`github.com/agencyenterprise/modular-pretraining`**. It contains
+the Simple Stories experiment, the partial-labelling experiment, the GRAM model and
+training loop, and, crucially, the recorded configurations, logs and raw losses of the
+runs behind Table 1. It has no licence file, so nothing from it is copied here.
 
-- **`github.com/agencyenterprise/modular-pretraining`** — "Official code for the ICML 2026
-  paper *Modular Pretraining Enables Access Control* (GRAM)." Found via web search, not via
-  the paper. Project page: `modularpretraining.com`.
-
-It contains the exact experiments we need: `src/run/experiment/stories/` (Fig. 2 / Table 1),
-`src/run/experiment/partial/` (Appendix G partial labelling), `src/model/moe.py` (the GRAM
-model), `src/run/train/routed.py` (routing + heterogeneous accumulation), `src/run/eval.py`,
-and `results/` with the authors' own per-run metrics and configs. Checkpoints and tokenised
-data are *not* included.
-
-This is load-bearing: several numbers below are resolved by `RUNCFG`/`AGG`, which record what
-actually produced Table 1, and that is not always what `PAPER` says.
+**Decision (Reece, 2026-11-22):** write our own clean implementation, use `CODE` as the
+specification, and cross-check numerically. The cross-checks are in section 6.
 
 ---
 
-## 1. `PAPER` contradicts itself and/or `CODE` (highest-impact)
+## 1. `PAPER` versus the code that produced its numbers
 
-### 1.1 GRAM core MLP width: 1856 or 2048?  — **OPEN**
+`RUNCFG` and `AGG` show that Table 1 was produced with settings that differ from the
+paper's text in the four ways below, plus the data cap in 1.8.
 
-| Source | Value | Internal rationale |
-|---|---|---|
-| `PAPER` §4 | `d_core = 1856`, `d_aux = 192` | "The number of active parameters per forward pass is matched across methods." |
-| `PAPER` App. A | `d_core = 1856`, `d_aux = 192` | "ensuring GRAM's maximum active parameter count never exceeds the total parameter count of the baseline model" |
-| `PAPER` §3 | core "the same size as the baseline Transformer's MLP layer" (**2048**), "unless otherwise noted" | default statement |
-| `CODE` `experiment/stories/methods/run.py` | `core_param_prc=1.0, aux_param_prc=0.1` → **core 2048**, aux 192 | — |
-| `RUNCFG` (all three Table 1 GRAM runs) | `core_param_prc=1.0, aux_param_prc=0.1` → **core 2048**, aux 192 | — |
+**Decision (Reece, 2026-11-22) for 1.1 to 1.4:** run both. The **code-exact** condition is
+primary, because it is the one the Stage 2 targets come from; the **paper-exact**
+condition is run second. Both are sets in `scripts/make_configs.py`.
 
-Verified arithmetic (`align=64` rounding as in `CODE`):
+### 1.1 GRAM core MLP width: 1856 or 2048 — DECIDED (both; code-exact = 2048)
 
-```
-baseline (MLP 2048)                 26,257,920 params   <- matches AGG's num_params exactly
-GRAM core=1856: active(core+1 aux)  26,262,016  (1.0002x baseline)   total 30,997,504
-GRAM core=2048: active(core+1 aux)  27,836,416  (1.0601x baseline)   total 32,571,904
-one auxiliary module                 1,578,496  (~1.6M, ~6% of baseline — matches PAPER App. A)
-```
+| Source | Value |
+|---|---|
+| `PAPER` §4 and App. A | `d_core = 1856`, `d_aux = 192`; "the number of active parameters per forward pass is matched across methods" |
+| `PAPER` §3 | the core is "the same size as the baseline Transformer's MLP layer" (2048) "unless otherwise noted" |
+| `CODE` and `RUNCFG` (all three Table 1 GRAM runs) | `core_param_prc=1.0, aux_param_prc=0.1` → **core 2048**, aux 192 |
 
-So **1856 is exactly the width that makes active parameters match the baseline**, confirming
-the paper's stated reasoning; `d_core + d_aux = 1856 + 192 = 2048`. But the three runs that
-produced Table 1 used 2048, and `AGG` reproduces Table 1 to four decimal places, so the
-published numbers come from core=2048 plus the Appendix I length rescaling (§1.2).
+Checked arithmetic: the baseline has 26,257,920 parameters; core 1856 + one module has
+26,262,016 (1.0002x), which is the paper's stated rationale exactly; core 2048 + one
+module has 27,836,416 (1.0601x). `CODE`'s training log confirms 32,571,904 total
+parameters for the GRAM model, i.e. core 2048.
 
-Consequence for us: the brief specifies 1856, which is faithful to `PAPER` but is **not** the
-configuration that produced the Stage 2 target numbers. Implementation exposes `core_mlp_dim`
-/ `aux_mlp_dim` as config, so both run; only the choice of *primary* condition is open.
-
-### 1.2 Equal compute: same step count, or rescaled training length? — **OPEN**
+### 1.2 Equal compute: same step count, or rescaled length — DECIDED (both)
 
 | Source | Rule |
 |---|---|
-| `PAPER` App. A | "the same optimizer, learning rate schedule, and **number of training steps** are used across all baselines and GRAM variants to ensure compute parity" |
-| `PAPER` App. I | training **lengths are rescaled** by `λ = F_base / F_routed`, with `F = tokens x active params`; "when `λ < 1`, training is truncated" |
-| `CODE` / `RUNCFG` | `equal_compute=True` — implements App. I |
+| `PAPER` App. A | "the same ... number of training steps are used across all baselines and GRAM variants" |
+| `PAPER` App. I | lengths rescaled by `λ = F_base / F_routed`, `F` = tokens x active parameters |
+| `CODE` and `RUNCFG` | `equal_compute=True`: Appendix I |
 
-These are mutually exclusive, and the brief follows Appendix A ("Same number of training steps
-for every method"). Estimated magnitude at Simple Stories scale (token-weighted, `p_cr=0.5`,
-auxiliary mode share 0.542 of micro-batches):
+Code-exact: Appendix I rescaling. With core 2048, `λ = 0.9684` and GRAM trains 16,021 steps
+against the baseline's 16,544 (reproduced exactly, see section 6). Paper-exact: no
+rescaling, GRAM trains as many steps as the baseline.
 
-```
-core=2048 -> lambda = 0.968   (GRAM trains ~3.2% FEWER steps than baseline)
-core=1856 -> lambda = 1.028   (GRAM trains ~2.8% MORE  steps than baseline)
-```
+### 1.3 AdamW weight decay: 0.1 or 0.01 — DECIDED (both)
 
-Note the two open items interact: core=1856 + equal steps, and core=2048 + λ-rescaling, are
-both coherent readings of "approximate compute equivalence". Mixing them is not.
+`PAPER` App. A: 0.1. `CODE`: the string `weight_decay` occurs nowhere in the repository;
+every `AdamW(...)` leaves it at PyTorch's default, **0.01**. Code-exact: 0.01. Paper-exact:
+0.1. It applies to every parameter, as in `CODE`. Because it changes the baseline too,
+each condition has its own baseline.
 
-### 1.3 AdamW weight decay: 0.1 or 0.01? — **OPEN**
-
-`PAPER` App. A: "weight decay 0.1". The brief says 0.1.
-
-`CODE`: the string `weight_decay` **does not occur anywhere in the repository**. All nine
-`AdamW(...)` constructions omit it, so PyTorch's default **0.01** applied to every published
-run, including the Table 1 runs.
-
-### 1.4 Elicitation (elicited-forget) protocol — **OPEN**
+### 1.4 Elicited-forget protocol — DECIDED (both protocols run on every model)
 
 | Item | `PAPER` | `CODE` |
 |---|---|---|
-| Sequences | 128 from each forget category (App. A); 512 for dual-use/scaling (§2) | `num_seq=512` default, not overridden for stories |
-| Steps | "finetune each model for 75 steps" (App. A) | `num_rounds=200`, `patience=10`, early stop on val loss |
-| Checkpoint | "select the checkpoint achieving the lowest validation loss" (§2) | same (patience-based best-val) |
-| Learning rate | **not stated** | `lr = stage.lr / 4` → **1.25e-3** at stories' LR of 5e-3 |
+| Sequences | 128 per forget topic (App. A) | 512 |
+| Steps | "75 steps" (App. A) | up to 200 full-batch steps, stop after 10 without a new best |
+| Reported loss | "the checkpoint achieving the lowest validation loss" (§2) | the same |
+| Learning rate | **not stated** | training LR / 4 = **1.25e-3** |
 
-The brief asked for the missing finetuning LR to be flagged and a choice proposed: `CODE`
-answers it — `stage.lr / 4 = 1.25e-3`. That is the proposal, as it is what produced the
-published elicited-forget numbers. (A second variant, `lr/2`, exists in `CODE` for the
-multi-batch finetune path, which stories does not use.)
+The brief asked for the missing learning rate to be flagged and a choice proposed: it is
+`lr / 4`, from `CODE`. Elicitation is cheap, so every model is attacked with both
+protocols and both are reported (`cr_elicit_code`, `cr_elicit_paper`); the full curve of
+validation loss per step is saved, so "loss after exactly 75 steps" is available too.
 
-Also note §2's best-val-checkpoint selection is adversary-favourable and is *not* the same as
-the brief's "finetune for 75 steps, then recompute forget"; which of the two we report changes
-elicited forget.
+Other details, all from `CODE`: each step is one pass over all the adversary's sequences
+(full-batch gradient descent); AdamW with PyTorch's default betas and weight decay; a
+constant learning rate; no gradient clipping; the model is finetuned in its ablated form
+(only the profile's modules are active and can change); the best checkpoint is chosen
+among the *finetuned* ones, so the untouched model is not a candidate. In `RUNCFG`'s logs
+the best checkpoint is reached after 1 to 4 steps.
 
-### 1.5 Compute-ratio denominator — **DECIDED** (follow `PAPER`)
+### 1.5 Compute-ratio denominator — DECIDED (follow `PAPER`)
 
-The brief says "divide by the baseline's total steps". `PAPER` §2 and App. M both instead
-divide by the baseline's **final loss mapped through the fitted curve**:
+The brief says "divide by the baseline's total steps". `PAPER` §2 and App. M divide by the
+baseline's **final loss mapped through the fitted curve**, averaged over baseline seeds.
+This is not a detail: on the official curves the baseline's final loss maps to about
+18,900 steps, not 16,544 (the final learning-rate decay takes the model below the fitted
+power law). Dividing by the true step count would score the baseline itself at about 1.14.
 
-```
-CR(M, D_i) = L_i^-1( loss(M, D_i) ) / S̄_i ,
-S̄_i = mean over baseline seeds of L_i^-1( loss(baseline_n, D_i) )
-```
+Also from App. M: the fit is least squares on log-loss; baseline seeds are pooled into one
+curve per dataset; averages are averages of compute ratios, not ratios of averaged losses.
 
-App. M's reason: "so that any systematic bias in the fit enters numerator and denominator
-identically and cancels in the ratio; the baseline therefore averages to CR = 1 by
-construction". Following the paper — it is strictly better and the brief's version looks like
-a paraphrase slip. Both are cheap to report; the paper's is primary.
+### 1.6 Number of baseline validation sweeps — DECIDED (200)
 
-Also fixed by App. M, beyond the brief: the least-squares fit is on **log-space residuals**
-`log A_i − α_i log(s_k + s0_i) − log ℓ_k`; baseline seeds are **pooled** into one shared curve
-per dataset; variants are evaluated **once at end of training**.
+`PAPER` App. M and the brief: about 100. `CODE`/`RUNCFG`: 200. Using 200: more points for
+the fit, and what the published fits used.
 
-### 1.6 Number of baseline evaluation points — **DECIDED** (use 200)
+### 1.7 Table 1 error bars — DECIDED (they are 90% confidence intervals)
 
-`PAPER` App. M: "approximately 100 measurements per dataset". The brief says ~100.
-`CODE`/`RUNCFG`: `num_train_evals=200`. Using 200 — strictly more information for the power-law
-fit, and it is what the published fits used. Logged as a deviation from the brief, not the paper.
+The parenthesised values in Table 1 are half-widths of 90% t-intervals over the three seed
+means (`PAPER` Fig. 8 caption, App. M; `AGG` confirms), not standard deviations.
 
-### 1.7 Table 1 error bars are 90% CIs, not standard deviations — **DECIDED**
+### 1.8 Per-topic token cap — DECIDED (on for code-exact, off for paper-exact)
 
-The brief carried the parenthesised values without naming them. `PAPER` Fig. 8 caption and
-App. M: "90% t-intervals over the N = 3 seed means". `AGG` confirms (`ci90` column matches the
-paper's parentheses exactly). Aggregation order: average CRs **within** a seed over a label
-class, **then** mean across seeds.
-
----
-
-## 2. Paper unspecified → choice made
-
-### 2.1 Simple Stories micro-batch size / accumulation — **DECIDED** (resolved by `CODE`)
-
-The brief correctly flags that `PAPER` does not state it. `CODE` `GetStoriesConfig` and
-`RUNCFG` both record `micro_batch_size=128`, `target_effective_batch_size=128`,
-`accumulation_steps=1`.
-
-Consequence worth stating plainly: **with `accumulation_steps=1` there is exactly one routing
-decision per optimizer step on a single GPU, so heterogeneous and uniform accumulation are
-identical for this experiment.** Appendix H's machinery is still implemented (it is required
-for correctness at >1 accumulation step, and the brief asks for it), but it is inert at the
-paper's own Simple Stories settings on one device. The authors ran 8-GPU DDP, where the eight
-ranks within a step do carry different routing decisions.
-
-### 2.2 Routing realised as exact proportions, not Bernoulli draws — **DECIDED** (follow `CODE`)
-
-The brief (and `PAPER` Fig. 1) describe routing as "with probability `p_cr`" / "with
-probability `p_as`". `CODE` instead builds a list with *exact* counts
-(`round(len_core * robust_prc)`, `round(cur_aux_ft_samples * aux_route_prc)`) and then shuffles
-it. Statistically near-identical, but deterministic and variance-free. Following `CODE`, since
-it is what produced Table 1.
-
-### 2.3 Architecture details absent from the brief — **DECIDED** (resolved by `CODE`)
-
-`PAPER` gives 8 layers / 8 heads / embed 512 / ctx 256 / vocab 4096. `CODE` additionally fixes:
-**GQA with `num_key_value=2`** (not 8), attention bias **on**, RMSNorm (not LayerNorm),
-GELU(tanh) MLP with bias, untied embed/unembed with unembed bias, `eos_token_id=1`,
-document-boundary attention masking so packed sequences do not attend across EOS, loss
-`ignore_index=-1000`, init `normal(0, 0.02)` with zero bias and RMSNorm weight 1.0.
-
-Confirmed correct: this exact reconstruction gives **26,257,920** parameters, matching the
-`num_params` field the authors record for every Simple Stories run.
-
-### 2.4 Dataset identifiers — **DECIDED** (verified, not assumed)
-
-The brief asked these be verified rather than assumed. Verified from `CODE`
-`src/data/prep_stories.py` and `src/data/stories/metadata.json`:
-
-- HF dataset ID: **`SimpleStories/SimpleStories`**, `split="train"`
-- Topic field name: **`topic`** (`--column topic`)
-- Tokenizer: **`SimpleStories/SimpleStories-1.25M`**, `vocab_size` 4096 ✔
-- **48** topic categories ✔; labels normalised to lowercase with spaces → dashes
-- First four alphabetically = the brief's auxiliary set ✔
-  (`a-deadline-or-time-limit`, `alien-encounters`, `bygone-eras`, `cultural-traditions`)
-- Held-out split: `train_test_split(test_size=0.1, seed=42)` applied **before** splitting by
-  topic, so every dataset (core and each auxiliary) gets its own held-out validation split ✔
-- Totals: **547,853,673** train tokens / 60,763,919 validation tokens; auxiliary = 8.43% of
-  train tokens; one epoch at batch 128 x seq 256 = **16,719 optimizer steps**
-
-Note `CODE` uses a **10%** validation split, with an inline comment that it "was 0.01 in OG
-version" — so an earlier version of their own pipeline held out 1%.
+`PAPER` App. A: "We train both GRAM and baseline over all available data." `CODE` gives
+every topic a token budget equal to the mean topic size of its class (44 core topics, or
+4 auxiliary ones) and ignores what a topic has beyond it. That drops 0.9% of the training
+data: 16,544 batches per epoch instead of 16,697. Implemented as
+`data.cap_topics_at_class_mean`; with it, the number of batches of each of the 48 topics
+matches `CODE`'s arithmetic exactly.
 
 ---
 
-## 3. Deliberate deviations from the paper in this project
+## 2. Unspecified in `PAPER`, resolved from `CODE`
 
-### 3.1 Filtering is core-only — **DECIDED** (per brief)
+### 2.1 Micro-batch size, accumulation, number of GPUs — DECIDED
 
-`PAPER` trains 5 filtered models (`D1` alone, plus `D1 ∪ D_i` for each of the 4 auxiliaries)
-and Table 1's filtering row averages over all five profiles. This project's inference profile
-is core-only, so we train **one** filtered model on `D1` alone. `CODE` supports this directly
-(`FilteringConfig(retain_targets=[["core"]])`). Expect small differences against the Table 1
-filtering row; the size of that gap will be quantified in Stage 2 rather than assumed.
+The brief flagged the missing micro-batch size. `RUNCFG`: `micro_batch_size=128`,
+`accumulation_steps=1`, `num_gpus=1`. The Table 1 runs were single-GPU, one micro-batch
+per optimizer step, which is exactly a single RTX 4090's situation.
 
-### 3.2 Stage 3 labelled fractions and routing probabilities — **OPEN**
+Consequence: **heterogeneous accumulation (Appendix H) is inert in this experiment.** With
+one micro-batch per step there is one routing decision per step and nothing to keep
+apart. The freeze mechanism is implemented and tested as the brief asks, and
+`batch_size` / `micro_batch_size` are configuration options, but at the paper's settings
+isolation is carried entirely by stepping only the routed groups' optimizers (README,
+"Two mechanisms").
 
-`PAPER` App. G's partial-labelling experiment is **400M parameters on the realistic dual-use
-corpus** (not Simple Stories), at **one** labelled fraction (50%), and uses **`p_as = 0.5`,
-`p_cr = 0.2`, `p_af = 4` for code-lisp / `3` for the rest**, plus the resized architecture
-(core 95%, each auxiliary 1.25% of the baseline MLP). It also states the resize was *necessary*
-for good performance: "We find it necessary to modify the architecture of GRAM in this setting
-to achieve good performance."
+### 2.2 Routing by exact proportions — DECIDED (follow `CODE`)
 
-This project instead sweeps `f ∈ {1.0, 0.5, 0.1, 0.01}` on **Simple Stories at 26M**, keeping
-the stories module sizes and `p_as = 0.3`, `p_cr = 0.5`, `p_af = 1.0` as the primary condition,
-with the 95%/1.25% resize as an off-by-default option. So Stage 3 is an extension, not a
-replication, and its only paper-comparable point (`f = 0.5`) differs in scale, corpus, module
-sizing and both routing probabilities. Flagged because the brief carries `p_as`/`p_cr` from the
-stories config into Stage 3 without noting the paper changed them there.
+`PAPER` and the brief say "with probability p_cr / p_as". `CODE` fixes the number of
+batches under each rule and shuffles their order. Same mixture, no sampling noise.
 
-`PAPER` App. G reference values (400M, realistic corpus, core-only profile):
-`Filtering(100%)` core 0.92 / forget 0.54 / elicit 0.67; `GRAM(50%)` 0.96 / 0.60 / 0.76;
-`Filtering(50%)` 0.99 / 0.85 / 0.85; `FT-LoRA(50%)` 0.99 / 0.85 / 0.86.
+### 2.3 Architecture — DECIDED (follow `CODE`; verified)
 
-Stage 3 rules themselves match `PAPER` App. G exactly and need no deviation: unlabelled data is
-core-for-filtering, and all-parameters-forward-and-backward for GRAM. `CODE` already implements
-the labelled fraction as `label_prc`.
+Beyond `PAPER`'s 8 layers / 8 heads / width 512 / context 256 / vocabulary 4096, `CODE`
+fixes: rotary position encoding on queries and keys (half of each head's dimensions at
+zero frequency); grouped-query attention with **2 key/value heads**; biases on all linear
+layers; pre-norm RMSNorm; GELU(tanh) MLPs; untied embedding and unembedding; an attention
+mask that confines each position to its own story; initialisation N(0, 0.02).
+
+**RMSNorm epsilon.** `CODE` uses `nn.RMSNorm` with its default epsilon on a bfloat16 model.
+That default depends on the PyTorch version: up to 2.6 it was the bfloat16 machine epsilon
+(2^-7 = 0.0078, large enough to change how a freshly initialised model normalises); from
+2.7 on it is the float32 epsilon (1.19e-7). `CODE`'s PyTorch version is not recorded; its
+June 2026 runs use a `transformers` 5.x tokenizer class, so 2.7 or later is assumed. The
+float32 value is set explicitly here so the model is the same function on every version.
+
+### 2.4 Dataset identifiers — DECIDED (verified, not assumed)
+
+Hugging Face dataset **`SimpleStories/SimpleStories`** (MIT), `train` split, 2,115,696
+stories, pinned to revision `e63b8adc`. Topic field: **`topic`**, 48 values. Tokenizer
+`SimpleStories/SimpleStories-1.25M` (WordPiece, lower-casing, vocabulary 4096, `[EOS]` = 1).
+Held-out split: `train_test_split(test_size=0.1, seed=42)` made *before* dividing by topic.
+The first four topics alphabetically are the brief's auxiliary set.
+
+Verified against the data itself, and against `CODE`: `scripts/prepare_data.py` reproduces
+all 96 per-topic token counts of the official preparation (547,853,673 training tokens,
+60,763,919 held-out).
+
+### 2.5 "bfloat16 precision" — DECIDED (follow `CODE`)
+
+`CODE` does not use autocast. It casts the whole model to bfloat16, so parameters,
+gradients and AdamW state are all bfloat16, with fused AdamW. Reproduced as
+`optim.precision: bf16`. (`fp32` exists for the CPU tests.)
+
+### 2.6 Filtering trains for fewer steps — DECIDED (follow `CODE`)
+
+The filtered model makes one pass over its own, smaller data: 15,143 steps against the
+baseline's 16,544, with its own 10/80/10 schedule. This is `CODE`'s behaviour and the
+natural meaning of "train on D1"; it means "the same number of training steps for every
+method" (`PAPER` App. A, and the brief) does not hold for filtering in either condition.
+
+### 2.7 Which module a robust core batch activates — DECIDED (follow `CODE`)
+
+`PAPER`: "a single randomly sampled auxiliary module". `CODE`: in proportion to the size of
+each auxiliary dataset (1842 / 1806 / 1842 / 1842 batches in the Table 1 run). Following
+`CODE`; the shares are computed from the pools of the *given* labels.
+
+### 2.8 Batches are single-topic in `CODE` — OPEN for Stages 3 and 4
+
+`CODE` has one data loader per topic file and draws each batch from one loader. So every
+batch holds a single topic, including core batches (one of the 44 core topics at a time)
+and, in its partial-labelling experiment, **unlabeled batches**: a batch routed as
+"unlabeled" is in fact 128 sequences of one topic. `PAPER` does not mention this.
+
+Both behaviours are implemented (`data.batch_assembly`):
+
+* `single_topic`: as `CODE`. Used for Stage 2, to stay code-exact.
+* `mixed`: sequences are shuffled across the whole pool of a given label, so batch
+  composition uses nothing but the given label.
+
+This is harmless for Stage 2, but it bears directly on Stages 3 and 4:
+
+* With `single_topic`, an unlabeled batch of topic *i* hands module *i* an undiluted
+  topic-*i* gradient, which a trainer that truly lacked labels could not arrange. With
+  `mixed`, unlabeled topic-*i* data arrives as about 2% of each unlabeled batch. This may
+  matter a great deal for the "absorption" effect the paper's Appendix G reports.
+* With `single_topic`, small label cells are batched on their own and lose data to
+  incomplete batches; at a 1% false-positive rate every cell is smaller than one batch and
+  none of the mislabeled stories would be trained on at all. The training loop warns when
+  this happens.
+
+**Recommendation:** `mixed` for Stages 3 and 4, with their own `mixed` baseline and
+`labeled=1` runs as anchors, and Stage 2's `single_topic` runs kept as the replication.
+Needs a decision before Stage 3.
 
 ---
 
-## 4. Additions to the paper (this project's own extensions)
+## 3. Where this project deliberately differs from `CODE`
 
-Not in `PAPER`; requested in the brief. Listed here so the register is complete.
+Small, deliberate, and none changes what is being measured.
 
-1. **Per-run saved extras** — 10 evenly spaced checkpoints plus final, with all parameter
-   groups and optimizer states; a data-split manifest recording for every training story its
-   ID, true topic, given label (or `unlabeled`) and seed; gradient probes at 20 points.
-2. **Gradient probes** — fixed held-out probe batches (two per topic including core) never
-   trained on; measurement only, with no optimizer step and no RNG/parameter/optimizer-state
-   effect. Records relative gradient norm `|grad_g| / |theta_g|` per (topic, group), plus
-   labeled-vs-unlabeled gradient cosine similarity restricted to module `i`'s parameters, the
-   same for core, and a mismatched-module control.
-3. **Stage 4, wrong labels** — false negatives (5/20/50% of auxiliary stories labelled core),
-   false positives (1/5/20% of core stories labelled a random auxiliary), wrong module
-   (10/30% of auxiliary stories labelled a different auxiliary), and the 20%-miss comparison of
-   "labelled core" versus "unlabeled". Entirely this project's own; no paper counterpart.
-4. **Labelled-fraction sweep beyond 50%** — see §3.2.
-5. **Re-running evaluation from the saved checkpoint before reporting any number** — a
-   verification step the paper does not describe.
+1. **The loss is computed in float32.** `CODE` computes cross-entropy on bfloat16 logits,
+   which quantises each batch's loss to about 0.008 nats, the size of the effects under
+   study. Here the logits are cast to float32 for the loss. Training gradients are
+   unaffected to within bfloat16 noise; reported losses are cleaner.
+2. **Labels belong to stories, not batches.** `CODE`'s partial labelling decides per batch
+   whether it is "labeled". The brief needs to know which *stories* were unlabeled or
+   mislabeled, so here every training story gets a given label first; stories are then
+   grouped by (given label, true topic) into streams, sequences and batches.
+3. **Validation uses every held-out sequence**, including a last incomplete batch;
+   `CODE` drops incomplete batches. The mean is over all predicted tokens.
+4. **5% of each topic's held-out stories are set aside as probe data** (section 5.3), so
+   the validation sets are that much smaller than `CODE`'s.
+5. **The baseline's learning curve** scores, like `CODE`, every auxiliary validation set in
+   full and 50 batches' worth of core sequences redrawn at every sweep. Here the core
+   sample is drawn across all core topics at once rather than as 50 single-topic batches,
+   which is the same in expectation and less noisy.
+6. **One seed drives everything.** `CODE` shuffles the batch plan with the process rank
+   (always 0 on one GPU) and the data with the run seed. Here the plan, the data order,
+   the label split and the initialisation all derive from the run seed.
+7. **`torch.compile` is off by default** (`CODE`: on). It changes speed, not results;
+   `scripts/benchmark.py --compile` measures whether it is worth switching on.
+8. **Evenly spaced measurement steps.** `CODE` sweeps every `round(N/200)` steps; here the
+   200 sweeps are spread evenly and end on the last step.
 
 ---
 
-## 5. Open questions blocking Stage 2's primary condition
+## 4. Where the project's design departs from the paper
 
-1. §1.1 core width 1856 (paper) vs 2048 (what produced Table 1)
-2. §1.2 equal steps (paper App. A / brief) vs λ-rescaled length (paper App. I / code)
-3. §1.3 weight decay 0.1 (paper) vs 0.01 (code default, used for Table 1)
-4. §1.4 elicitation 128 seq / 75 steps (paper) vs 512 seq / early-stopping (code)
+### 4.1 Filtering is core-only — DECIDED (per brief)
 
-None block Stage 1: all four are config options in the implementation. They decide which
-configuration is declared primary for the Table 1 comparison.
+`PAPER` trains five filtered models and Table 1's filtering row averages over all five
+profiles. Here one filtered model is trained, on core data alone.
+
+How much that changes the targets, computed from `AGG`'s own per-profile numbers:
+
+| Authors' data | core | retain | forget | elicit |
+|---|---|---|---|---|
+| Filtering, Table 1 (five profiles) | 0.961 | 0.962 | 0.780 | 0.870 |
+| Filtering, core-only model | 0.946 | (none) | 0.767 | 0.855 |
+| GRAM, Table 1 (five profiles) | 0.938 | 0.952 | 0.766 | 0.855 |
+| GRAM, core-only profile; retain = each module alone | 0.940 | 0.952 | 0.764 | 0.855 |
+
+So core-only filtering sits about 0.015 below the Table 1 filtering row on every metric,
+GRAM is essentially unchanged, and a core-only filtered model has **no retain number**:
+there is no module to switch on. The second and fourth rows are the like-for-like targets
+for Stage 2.
+
+Per-topic forget ratios differ a lot (GRAM, authors' data: deadlines 0.61, aliens 0.69,
+cultural traditions 0.85, bygone eras 0.90), so results are always saved per topic.
+
+### 4.2 Stage 3: labelled fractions and routing probabilities — OPEN
+
+`PAPER` App. G is a 400M-parameter experiment on the realistic corpus at one labelled
+fraction (50%), with `p_as = 0.5`, `p_cr = 0.2`, `p_af = 3` to `4`, and a resized
+architecture (core 95%, each module 1.25% of the baseline MLP) that the paper says was
+*necessary* "to achieve good performance". `CODE`'s partial-labelling script differs again
+(800M; `robust_prc=0.2` but `aux_route_prc=0.0`, i.e. `p_as = 0`; `aux_factor=1.0`).
+
+The brief sweeps `f ∈ {1.0, 0.5, 0.1, 0.01}` on Simple Stories at 26M with the stories
+settings (`p_as = 0.3`, `p_cr = 0.5`, `p_af = 1`, modules 2048/192) as the primary
+condition, and the 95% / 1.25% resize as an option. So Stage 3 is an extension, not a
+replication, and its one paper-comparable point differs in scale, corpus, module sizes and
+both routing probabilities. To decide before Stage 3: whether to add a condition with the
+paper's partial-labelling probabilities, and section 2.8.
+
+On the resize: 95% and 1.25% of 2048 are 1946 and 26. `CODE` rounds widths to multiples
+of 64, which would make the module width **0** at this model size, so the option will use
+the unrounded 1946 / 26.
+
+The rules themselves need no deviation: unlabeled data is core for filtering, and
+everything-active-and-updated for GRAM, as in App. G.
+
+---
+
+## 5. Additions to the paper (requested in the brief), and the choices they left open
+
+### 5.1 Checkpoints
+Eleven per run: at 0%, 10%, ..., 90% of training and at the end. The first is therefore the
+initialisation, which the brief did not ask for explicitly but which analysis usually
+wants. Each holds every parameter, every group's optimizer state, and the parameter names
+of each group. A twelfth, rolling checkpoint exists only while a run is in progress.
+
+### 5.2 Split manifest and batch log
+`manifest.parquet` has one row per training story: id (row in the Hugging Face dataset),
+true topic, true label, given label (or `unlabeled`), seed, and the rows of the sequence
+table that contain it. `batch_log.npz` records, for every micro-batch, the routing rule
+and the sequence rows trained on. Stories dropped by the topic cap or `train_fraction` are
+not in the manifest; stories whose sequences fall in an unused stream tail or an
+incomplete batch are in it and can be identified from the batch log.
+
+Label splits are nested: at a given seed, the stories labeled at `f = 0.01` are a subset
+of those labeled at `0.1`, and so on; likewise the stories mislabeled at 5% are a subset
+of those at 20%. This was not requested; it reduces noise between conditions.
+
+### 5.3 Gradient probes
+* Data: two fixed batches of 128 sequences per dataset (core and each auxiliary topic),
+  from a `probe` split set aside from the held-out data. Never trained on, not part of the
+  validation sets, identical for every run and seed.
+* Twenty probe points, at 5%, 10%, ..., 100% of training. Every kept checkpoint except the
+  initialisation coincides with a probe point.
+* Gradients are computed on a float32 copy of the model (same weights, more precise
+  arithmetic; training itself is bfloat16), in chunks to bound memory.
+* **The mismatched-module control in the brief is ambiguous**, so both readings are
+  recorded. For topic *i* and module *j ≠ i*, the unlabeled-rule gradient of module *j*
+  from topic *i*'s batch A is compared with (1) the gradient module *j* gets when topic
+  *i*'s batch B is run as if labeled *j* (`cos_unlabeled_vs_labeled`: "topic i's batch,
+  module j's parameters", read literally), and (2) the gradient module *j* gets from its
+  own topic's batch B (`cos_unlabeled_vs_own_topic_labeled`: a null comparison).
+* Added: `cos_unlabeled_a_vs_b`, the cosine between the two batches under the *same* rule.
+  It is the ceiling any A-versus-B cosine can reach, and the others are hard to read
+  without it. Also the loss of each probe batch.
+* For the dense models the probes record the gradient norms only (one group, no modules).
+
+### 5.4 Stage 4 (wrong labels)
+Implemented and tested, not yet run: false negatives, false positives, wrong module, and
+`missed_unlabeled`, which hits exactly the stories that `false_negative` hits at the same
+rate. Filtering follows the given label throughout. `results.per_module_ablation` builds
+the own-module / other-module table.
+
+### 5.5 Re-evaluation from the checkpoint
+Evaluation always loads the final checkpoint from disk into a fresh model. Training
+records a fingerprint of the model in memory which the evaluation must reproduce, and
+`scripts/make_results.py --check` re-evaluates finished runs and compares with the stored
+losses before producing any table.
+
+---
+
+## 6. What has been verified against the official artefacts
+
+| Check | Result |
+|---|---|
+| Parameter counts | 26,257,920 (dense) and 32,571,904 (GRAM), both exact |
+| Same function as `CODE`'s model, weights copied across (`scripts/crosscheck_official.py`) | logits and gradients bit-identical for the dense model and for every routing rule; 2e-6 on the all-modules path, where `CODE` uses a different (einsum) code path |
+| Data (`scripts/prepare_data.py`) | all 96 per-topic token counts exact |
+| Batches per topic with the cap | exact for all 48 topics; 16,544 per epoch |
+| Routing plan (`tests/test_routing.py`, `tests/test_real_data.py`) | every per-rule batch count of two official training logs, and the step counts 16,544 / 15,143 / 16,021 from real data |
+| Learning-rate schedule | warm-up / constant / decay boundaries and logged values |
+| Compute ratio (`scripts/validate_compute_ratio.py`) | all 738 published ratios reproduced from the raw losses to 4e-10; Table 1 reproduced |
+
+Not verifiable from the artefacts: `CODE`'s PyTorch version (2.3), and anything about
+training dynamics, which Stage 2 will test by comparing final losses and compute ratios.
+
+---
+
+## 7. Open questions
+
+1. **2.8** Batch assembly for Stages 3 and 4: `single_topic` (as `CODE`) or `mixed`
+   (recommended).
+2. **4.2** Whether Stage 3 should include a condition with the paper's partial-labelling
+   routing probabilities.
+3. **5.3** Which reading of the mismatched-module control was intended (both are recorded).
