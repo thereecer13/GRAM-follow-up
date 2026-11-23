@@ -523,8 +523,7 @@ def _train(config: RunConfig, run_dir: Path, logger: logging.Logger, stop: StopS
     else:
         step = 0
         logger.info(f"starting {config.name}: {config.method}, seed {config.seed}, {total_steps} steps on {device}")
-        for line in json.dumps(setup.plan.count_by_rule_name()).split("\n"):
-            logger.info(f"micro-batches per rule: {line}")
+        logger.info(f"micro-batches per rule: {setup.plan.count_by_rule_name()}")
         logger.info(f"parameters per group: {model.num_parameters()}")
         if 0 in checkpoint_at:
             save_checkpoint(step_checkpoint_path(run_dir, 0), 0, total_steps, model, optimizers, config)
@@ -604,7 +603,8 @@ def _train(config: RunConfig, run_dir: Path, logger: logging.Logger, stop: StopS
                 )
             )
         if step in probe_at:
-            probe_metrics.extend(run_gradient_probes(model, probe_batches, step, config.probes.chunk_size))
+            rows = run_gradient_probes(model, probe_batches, step, config.probes.chunk_size)
+            probe_metrics.extend({"run": config.name, **row} for row in rows)
         seconds_measuring += time.time() - tick
 
         # Checkpoints.

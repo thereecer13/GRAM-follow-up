@@ -1,5 +1,10 @@
 # Stage 0 — paper + official code reconnaissance
 
+> Written before any code, and kept as a record of that moment. Where it and `DEVIATIONS.md`
+> disagree, `DEVIATIONS.md` is current: it includes what the implementation later surfaced
+> (the per-topic token cap and its 16,544 steps per epoch, bfloat16 parameters, single-topic
+> batches, the RMSNorm epsilon), and the measured rather than guessed cost figures.
+
 Read before writing any code, per the brief. Everything load-bearing is in
 `../DEVIATIONS.md`; this file is the map and the raw references.
 

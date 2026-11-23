@@ -9,6 +9,7 @@ compute-ratio reference, and writes:
     losses.csv              one row per (run, profile, dataset): every raw loss and its ratio
     reference.csv           the fitted baseline curve of each dataset
     per_module_ablation.csv for GRAM runs: the effect of ablating single modules
+    gradient_probes.parquet the gradient probes of all runs: one row per (run, step, topic, group)
     summary.csv             mean and 90% CI over seeds, per method and label setting
     runs/<run>/             the small files of every run (configuration, plan, training
                             metrics, learning curve, gradient probes, losses, elicitation
@@ -28,7 +29,7 @@ from pathlib import Path
 import pandas as pd
 
 from gram.compute_ratio import mean_and_ci90
-from gram.results import build_tables, per_module_ablation, read_runs
+from gram.results import build_tables, label_setting, per_module_ablation, read_runs
 
 HEADLINE = ["cr_core", "cr_retain", "cr_forget", "cr_elicit_code", "cr_elicit_paper"]
 
@@ -87,6 +88,19 @@ def main() -> None:
         aux = [column[len("cr_forget_"):] for column in results.columns if column.startswith("cr_forget_")]
         per_module_ablation(losses, aux).to_csv(args.out / "per_module_ablation.csv", index=False)
     export_small_files(args.runs_dir, args.out)
+
+    probe_tables = []
+    for run in read_runs(args.runs_dir):
+        path = run["dir"] / "probes" / "gradient_probes.parquet"
+        if path.exists():
+            table = pd.read_parquet(path)
+            table["run"] = run["dir"].name
+            table.insert(1, "method", run["config"].method)
+            table.insert(2, "seed", run["config"].seed)
+            table.insert(3, "label_setting", label_setting(run["config"]))
+            probe_tables.append(table[["run"] + [column for column in table.columns if column != "run"]])
+    if probe_tables:
+        pd.concat(probe_tables, ignore_index=True).to_parquet(args.out / "gradient_probes.parquet", index=False)
 
     with pd.option_context("display.width", 200, "display.max_columns", 20):
         print(f"{len(results)} finished runs in {args.runs_dir}; reference pooled over "

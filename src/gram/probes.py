@@ -37,6 +37,14 @@ agreement about *direction*, not the shared noise of one batch.
       *own* topic's batch B. A null comparison: does unlabeled topic-i data push module
       j along the direction of module j's own specialty?
 
+``cos_unlabeled_vs_own_topic_labeled`` is in fact filled in for every topic t and every
+module j, including t = core (``cosine_kind = "core_data"``) and t = j (where it equals
+the matched cosine). Together with the gradient norms this gives, for each module, how
+far unlabeled data of each topic moves it along the direction of its own labeled
+training. That is what is needed to reason about a *mixed* unlabeled batch, whose
+gradient is the weighted sum of the per-topic gradients: about 92% core data and 2% of
+each auxiliary topic.
+
 Every row also has ``cos_unlabeled_a_vs_b``, the cosine between the unlabeled-rule
 gradients of batches A and B. Two batches of the same topic under the *same* rule never
 agree perfectly, so this is the ceiling against which the cosines above should be read.
@@ -169,6 +177,13 @@ def run_gradient_probes(
                     "cos_unlabeled_vs_own_topic_labeled": float("nan"),
                 }
 
+                # For every module: does this topic's unlabeled data push the module along the
+                # direction of the module's own labeled training?
+                if group in aux:
+                    row["cos_unlabeled_vs_own_topic_labeled"] = cosine(unlabeled_a[group], own_labeled[group][group])
+                    if topic == CORE:
+                        row["cosine_kind"] = "core_data"
+
                 if topic in aux:
                     if group == topic:
                         row["cosine_kind"] = "matched"
@@ -181,7 +196,6 @@ def run_gradient_probes(
                         as_other_module, _ = group_gradients(probe_model, batch_b, (CORE, group), chunk_size)
                         row["cosine_kind"] = "mismatched"
                         row["cos_unlabeled_vs_labeled"] = cosine(unlabeled_a[group], as_other_module[group])
-                        row["cos_unlabeled_vs_own_topic_labeled"] = cosine(unlabeled_a[group], own_labeled[group][group])
                 rows.append(row)
 
         del probe_model

@@ -30,6 +30,9 @@ GRAM's parameters are divided into five groups. Each group has its own AdamW opt
 | `core` | Everything shared: the token embedding, the unembedding, every attention layer, every normalisation layer, and the **core MLP** of each of the 8 blocks. | 26,257,920 |
 | one group per auxiliary topic (4 of them) | That topic's small MLP in each of the 8 blocks. Nothing else. | 1,578,496 each |
 
+(Counts are for the replication condition, core MLP width 2048. At the paper's stated
+width of 1856 the core group has 24,683,520 parameters.)
+
 "Core" is far more than the core MLP. When the core group is not updated, the embeddings
 and all the attention layers stand still too.
 
@@ -190,7 +193,15 @@ runs/<set>/<run>/
 ```
 
 `manifest.parquet`, `cells.csv` and `batch_log.npz` together answer "which stories were
-seen without a label, when, and under which rule".
+seen without a label, when, and under which rule". `gram.analysis` does the join:
+
+```python
+from gram.analysis import load_model, story_exposures
+
+seen = story_exposures("runs/<set>/<run>")       # one row per (story, sequence, micro-batch) trained on
+unlabeled = seen[seen.rule == "unlabeled"].story_id.unique()
+model, config = load_model("runs/<set>/<run>", step=1654)   # any kept checkpoint, as float32
+```
 
 ## Where things are
 
@@ -207,6 +218,7 @@ seen without a label, when, and under which rule".
 | `src/gram/compute_ratio.py` | The compute-ratio metric |
 | `src/gram/elicit.py` | Elicited forget |
 | `src/gram/results.py`, `run.py`, `checkpoint.py` | Result tables, running a whole experiment, checkpoint files |
+| `src/gram/analysis.py` | Loading a run's models; which stories were trained on, when, under which rule |
 | `scripts/make_configs.py` | The experimental design: every set as "the defaults, with these changes" |
 
 ## Reading the results

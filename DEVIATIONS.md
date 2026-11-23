@@ -331,6 +331,11 @@ of those at 20%. This was not requested; it reduces noise between conditions.
   *i*'s batch B is run as if labeled *j* (`cos_unlabeled_vs_labeled`: "topic i's batch,
   module j's parameters", read literally), and (2) the gradient module *j* gets from its
   own topic's batch B (`cos_unlabeled_vs_own_topic_labeled`: a null comparison).
+* Added: `cos_unlabeled_vs_own_topic_labeled` is recorded for every (topic, module) pair,
+  including core data. With the gradient norms it says how far unlabeled data of each
+  topic moves a module along the direction of its own labeled training, which is what a
+  *mixed* unlabeled batch (92% core, 2% of each auxiliary topic) depends on. No extra
+  gradient passes are needed.
 * Added: `cos_unlabeled_a_vs_b`, the cosine between the two batches under the *same* rule.
   It is the ceiling any A-versus-B cosine can reach, and the others are hard to read
   without it. Also the loss of each probe batch.

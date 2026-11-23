@@ -162,8 +162,20 @@ def test_cosines_compare_the_unlabeled_rule_with_the_labeled_rule(probe_batches)
     own = reference_gradients(model, probe_batches[other][1], (CORE, other))  # module j's own topic, batch B
     assert mismatched["cos_unlabeled_vs_own_topic_labeled"] == pytest.approx(cosine(unlabeled_a[other], own[other]), abs=1e-5)
 
-    # The core dataset has no module of its own, so it carries no labeled-rule comparison.
-    assert all(rows[(CORE, group)]["cosine_kind"] == "" for group in ALL)
+    # The matched row carries the same number under both names.
+    assert matched["cos_unlabeled_vs_own_topic_labeled"] == matched["cos_unlabeled_vs_labeled"]
+
+    # Core data has no module of its own, so there is no labeled rule to run it under. What is
+    # recorded is whether unlabeled core data pushes each module along that module's own direction.
+    core_batch_a = probe_batches[CORE][0]
+    core_unlabeled = reference_gradients(model, core_batch_a, ALL)
+    for module in AUX:
+        row = rows[(CORE, module)]
+        own_direction = reference_gradients(model, probe_batches[module][1], (CORE, module))
+        assert row["cosine_kind"] == "core_data" and np.isnan(row["cos_unlabeled_vs_labeled"])
+        assert row["cos_unlabeled_vs_own_topic_labeled"] == pytest.approx(cosine(core_unlabeled[module], own_direction[module]), abs=1e-5)
+    assert rows[(CORE, CORE)]["cosine_kind"] == "" and np.isnan(rows[(CORE, CORE)]["cos_unlabeled_vs_own_topic_labeled"])
+    assert np.isnan(core["cos_unlabeled_vs_own_topic_labeled"]), "the core group has no topic of its own"
 
 
 def test_probing_a_bfloat16_model_measures_the_same_weights_in_float32(probe_batches):

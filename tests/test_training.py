@@ -8,6 +8,7 @@ import pytest
 import torch
 from helpers import AUX, make_store, tiny_run_config
 
+from gram.analysis import load_model, story_exposures
 from gram.checkpoint import final_checkpoint_path, latest_checkpoint_path, load_checkpoint, model_from_checkpoint
 from gram.config import CORE, UNLABELED, OptimConfig, load_config
 from gram.probes import probe_steps
@@ -112,6 +113,10 @@ def test_a_run_saves_everything_needed_later(finished_gram):
     # Gradient probes at the planned steps.
     probes = pd.read_parquet(run_dir / "probes" / "gradient_probes.parquet")
     assert sorted(probes.step.unique()) == plan["probe_steps"]
+    # Tidy: exactly one row per (run, step, topic, group).
+    assert list(probes.columns[:4]) == ["run", "step", "topic", "group"] and (probes.run == "gram_reference").all()
+    assert not probes.duplicated(["run", "step", "topic", "group"]).any()
+    assert len(probes) == len(plan["probe_steps"]) * 5 * 5
 
 
 def test_checkpoints_are_states_along_one_trajectory(finished_gram):
@@ -159,6 +164,45 @@ def test_batch_log_and_manifest_say_which_stories_were_trained_without_a_label(w
     assert manifest.given_label.eq(UNLABELED).mean() == pytest.approx(0.5, abs=0.01)
 
 
+def test_story_exposures_lists_every_time_a_story_was_trained_on(workspace):
+    config = config_for(workspace, "gram_exposures", labels__labeled_fraction=0.5, probes__enabled=False)
+    assert train(config) == "finished"
+    run_dir = config.run_dir
+    exposures = story_exposures(run_dir)
+    manifest = pd.read_parquet(run_dir / "manifest.parquet").set_index("story_id")
+    log = np.load(run_dir / "batch_log.npz")
+
+    # Check a sample of rows against the batch log directly.
+    for row in exposures.sample(200, random_state=0).itertuples():
+        assert row.sequence_row in log["sequence_rows"][row.micro_batch]
+        assert log["rule_names"][log["rule_index"][row.micro_batch]] == row.rule
+        assert manifest.first_sequence[row.story_id] <= row.sequence_row <= manifest.last_sequence[row.story_id]
+        assert row.step == row.micro_batch + 1  # one micro-batch per step in this run
+
+    # Nothing is missing: every (training sequence, micro-batch) pair appears for every story in that sequence.
+    pairs_in_log = log["sequence_rows"].size
+    stories_per_row = exposures.groupby(["sequence_row", "micro_batch"]).story_id.nunique()
+    assert len(stories_per_row) == pairs_in_log and (stories_per_row >= 1).all()
+
+    # The question the manifest exists to answer: which stories were trained on without a label?
+    without_label = exposures[exposures.rule == "unlabeled"]
+    assert (without_label.given_label == UNLABELED).all() and (without_label.active == "+".join([CORE, *AUX])).all()
+    assert set(exposures[exposures.given_label == UNLABELED].rule) == {"unlabeled"}
+    assert 0.35 < without_label.story_id.nunique() / len(manifest) < 0.5  # half are unlabeled; a few fall in unused tails
+    never_trained = set(manifest.index) - set(exposures.story_id)
+    assert 0 < len(never_trained) < 0.25 * len(manifest)
+
+
+def test_load_model_returns_any_kept_checkpoint(finished_gram):
+    run_dir = finished_gram.run_dir
+    final, config = load_model(run_dir)
+    assert config == finished_gram and next(final.parameters()).dtype == torch.float32 and not final.training
+    initial, _ = load_model(run_dir, step=0)
+    assert not torch.equal(initial.embed.weight, final.embed.weight)
+    with pytest.raises(FileNotFoundError, match="kept steps are"):
+        load_model(run_dir, step=7)
+
+
 # ------------------------------------------------------------------ resuming
 
 
@@ -178,8 +222,9 @@ def test_an_interrupted_run_resumes_to_exactly_the_same_result(workspace, finish
         load_checkpoint(final_checkpoint_path(finished_gram.run_dir)), load_checkpoint(final_checkpoint_path(config.run_dir))
     )
     for table in ("metrics/train.parquet", "probes/gradient_probes.parquet"):
-        straight = pd.read_parquet(finished_gram.run_dir / table)
-        resumed = pd.read_parquet(config.run_dir / table)
+        # Identical in everything but the name of the run.
+        straight = pd.read_parquet(finished_gram.run_dir / table).drop(columns="run", errors="ignore")
+        resumed = pd.read_parquet(config.run_dir / table).drop(columns="run", errors="ignore")
         pd.testing.assert_frame_equal(straight, resumed)
     assert len(pd.read_parquet(config.run_dir / "metrics/train.parquet")) == total
     assert sorted(p.name for p in (config.run_dir / "checkpoints").iterdir()) == sorted(
