@@ -191,10 +191,12 @@ def main() -> None:
     if args.price_per_hour is not None:
         print(f"  at ${args.price_per_hour:.2f}/hour: ${total / 60 * args.price_per_hour:.2f} per set")
 
-    checkpoints = config.checkpoints.num_spaced + 1
-    disk = checkpoints * (2 * sizes["dense"] + sizes["GRAM"])
-    print(f"\ndisk for one set: {checkpoints} checkpoints per run -> "
-          f"{checkpoints * sizes['dense']:.1f} GB per dense run, {checkpoints * sizes['GRAM']:.1f} GB per GRAM run, {disk:.1f} GB per set")
+    # Eleven checkpoints per run. The first is the initialisation, whose optimizers hold no
+    # state yet, so it is about a third the size of the others.
+    full = config.checkpoints.num_spaced
+    per_run = {name: (full + 1 / 3) * size for name, size in sizes.items()}
+    print(f"\ndisk for one set: {full + 1} checkpoints per run -> {per_run['dense']:.1f} GB per dense run, "
+          f"{per_run['GRAM']:.1f} GB per GRAM run, {2 * per_run['dense'] + per_run['GRAM']:.1f} GB per set")
     if args.micro_batch_size != 128:
         print("\nNote: the time estimate assumes the paper's batch of 128 sequences; it is not meaningful "
               f"for the micro-batch of {args.micro_batch_size} that was timed here.")

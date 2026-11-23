@@ -134,7 +134,7 @@ micro-batch per step; only the accumulation test fails.
 ```bash
 pip install -e ".[dev]"            # Python 3.10+, PyTorch 2.5+
 python scripts/prepare_data.py     # once: downloads and tokenises Simple Stories (~6 min, 1.3 GB)
-pytest                             # ~1 min on a CPU
+pytest                             # ~2 min on a CPU
 ```
 
 `prepare_data.py` checks its output against the official preparation: all 48 topics, in

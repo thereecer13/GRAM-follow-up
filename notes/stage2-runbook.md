@@ -108,13 +108,17 @@ measurement.
 
 | | Time | Cost at $0.40 per hour | Disk |
 |---|---|---|---|
-| code-exact set | 1.75 to 2.9 h | $0.70 to $1.15 | 5.6 GB |
-| paper-exact set | 1.75 to 2.9 h | $0.70 to $1.15 | 5.6 GB |
-| **Stage 2 in total** | **3.5 to 5.8 h** | **$1.40 to $2.30** | **11.2 GB** |
+| code-exact set | 1.75 to 2.9 h | $0.70 to $1.15 | 5.3 GB |
+| paper-exact set | 1.75 to 2.9 h | $0.70 to $1.15 | 5.3 GB |
+| **Stage 2 in total** | **3.5 to 5.8 h** | **$1.40 to $2.30** | **10.6 GB** |
 
-Disk is measured, not estimated: 11 checkpoints per run, each with all parameters and
-all optimizer states in bfloat16, is 1.7 GB for a dense run and 2.2 GB for a GRAM run.
-Peak GPU memory in the official logs was 8.2 GB for this model and batch size.
+Disk is measured, not estimated. A checkpoint with all parameters and all optimizer
+states in bfloat16 is 158 MB for a dense model and 196 MB for GRAM; the first of the
+eleven is the initialisation and has no optimizer state yet (about a third of the size).
+That is 1.6 GB for a dense run and 2.0 GB for a GRAM run, plus 25 MB of split manifest and
+batch log. The token store is 1.3 GB and the Hugging Face download cache, which can be
+deleted after `prepare_data.py`, another 4.6 GB. Peak GPU memory in the official logs
+was 8.2 GB for this model and batch size.
 
 Almost half of a set's time is validation forward passes rather than training. If the
 benchmark shows a set taking longer than is comfortable, the two cheapest cuts are the
@@ -123,7 +127,7 @@ profiles on a sample of the core validation set instead of all 206,000 sequences
 
 For orientation, the later stages at the same rates: Stage 3 is 27 runs (three seeds of a
 baseline and four labelled fractions of GRAM and filtering), roughly 15 to 24 hours and
-52 GB; Stage 4's first pass is 16 runs, roughly 8 to 14 hours and 32 GB.
+49 GB; Stage 4's first pass is 16 runs, roughly 8 to 14 hours and 30 GB.
 
 ## 5. What to send back
 
