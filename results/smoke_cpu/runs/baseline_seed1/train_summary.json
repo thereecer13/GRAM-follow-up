@@ -1,0 +1,17 @@
+{
+  "total_steps": 144,
+  "steps_in_this_call": 144,
+  "seconds_training": 337.03431701660156,
+  "seconds_measuring": 433.6717834472656,
+  "steps_per_second": 0.4272561953770033,
+  "device": "cpu",
+  "torch_version": "2.15.0+cu132",
+  "peak_gpu_memory_gb": null,
+  "fingerprint": {
+    "dense|core": 4.415003299713135,
+    "dense|a-deadline-or-time-limit": 4.473111629486084,
+    "dense|alien-encounters": 4.418900966644287,
+    "dense|bygone-eras": 4.477381706237793,
+    "dense|cultural-traditions": 4.422350883483887
+  }
+}

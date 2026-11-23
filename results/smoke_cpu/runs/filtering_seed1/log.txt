@@ -1,0 +1,6 @@
+01:56:00  starting filtering_seed1: filtering, seed 1, 132 steps on cpu
+01:56:00  micro-batches per rule: {"dense": 132}
+01:56:00  parameters per group: {'core': 1415808}
+02:02:25  step    100/132  loss 5.3665  lr 5.00e-03  0.4 steps/s  about 2.1 min left
+02:03:36  step    132/132  loss 4.7542  lr 3.85e-04  0.4 steps/s  about 0.0 min left
+02:03:36  finished training in 7.6 min (297s of training steps, 158s of measurements)

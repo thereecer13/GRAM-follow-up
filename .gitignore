@@ -6,10 +6,10 @@ __pycache__/
 *.egg-info/
 
 # Prepared data (rebuild with scripts/prepare_data.py)
-data/
+/data/
 
-# Run outputs: checkpoints are large, so runs live outside git.
-# Small result tables and plots are committed from results/ instead.
-runs/
+# Run outputs: checkpoints are large, so run directories live outside git. The leading
+# slash matters: results/<set>/runs/ holds the small per-run files and IS committed.
+/runs/
 *.pt
 *.bin

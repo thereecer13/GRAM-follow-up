@@ -1,0 +1,6 @@
+01:35:50  starting baseline_seed1: baseline, seed 1, 144 steps on cpu
+01:35:50  micro-batches per rule: {"dense": 144}
+01:35:50  parameters per group: {'core': 1415808}
+01:44:28  step    100/144  loss 5.4592  lr 5.00e-03  0.4 steps/s  about 3.8 min left
+01:48:42  step    144/144  loss 4.7511  lr 3.57e-04  0.4 steps/s  about 0.0 min left
+01:48:42  finished training in 12.9 min (337s of training steps, 434s of measurements)

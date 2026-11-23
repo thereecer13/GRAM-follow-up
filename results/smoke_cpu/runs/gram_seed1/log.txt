@@ -1,0 +1,6 @@
+02:14:48  starting gram_seed1: gram, seed 1, 141 steps on cpu
+02:14:48  micro-batches per rule: {'core_plain': 65, 'aux_isolated': 8, 'aux_spread': 4, 'core_robust': 64}
+02:14:48  parameters per group: {'core': 1415808, 'a-deadline-or-time-limit': 24928, 'alien-encounters': 24928, 'bygone-eras': 24928, 'cultural-traditions': 24928}
+02:36:38  step    100/141  loss 5.3899  lr 5.00e-03  0.2 steps/s  about 9.0 min left
+02:49:59  step    141/141  loss 4.6473  lr 3.57e-04  0.2 steps/s  about 0.0 min left
+02:49:59  finished training in 35.2 min (612s of training steps, 1437s of measurements)

@@ -1,0 +1,71 @@
+{
+  "method": "filtering",
+  "total_steps": 132,
+  "micro_batches": 132,
+  "accumulation_steps": 1,
+  "rules": [
+    {
+      "name": "dense",
+      "pool": "core",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 132
+    }
+  ],
+  "count_by_rule_name": {
+    "dense": 132
+  },
+  "pools": {
+    "core": {
+      "sequences": 19453,
+      "micro_batches_per_pass": 132
+    },
+    "a-deadline-or-time-limit": {
+      "sequences": 459,
+      "micro_batches_per_pass": 3
+    },
+    "alien-encounters": {
+      "sequences": 455,
+      "micro_batches_per_pass": 3
+    },
+    "bygone-eras": {
+      "sequences": 453,
+      "micro_batches_per_pass": 3
+    },
+    "cultural-traditions": {
+      "sequences": 459,
+      "micro_batches_per_pass": 3
+    }
+  },
+  "notes": {
+    "pools": [
+      "core",
+      "unlabeled"
+    ],
+    "micro_batches": 132
+  },
+  "checkpoint_steps": [
+    0,
+    13,
+    26,
+    40,
+    53,
+    66,
+    79,
+    92,
+    106,
+    119
+  ],
+  "probe_steps": [
+    26,
+    53,
+    79,
+    106,
+    132
+  ],
+  "warnings": []
+}
