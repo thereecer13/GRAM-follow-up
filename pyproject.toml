@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gram"
+version = "0.1.0"
+description = "GRAM (gradient-routed auxiliary modules) label-quality study on Simple Stories"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.5",          # needs nn.RMSNorm and scaled_dot_product_attention(enable_gqa=...)
+    "numpy",
+    "scipy",
+    "pandas",
+    "pyarrow",
+    "pyyaml",
+    "matplotlib",
+    "datasets",
+    "transformers",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

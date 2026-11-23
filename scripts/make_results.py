@@ -1,0 +1,83 @@
+"""Turn a set of finished runs into result tables.
+
+    python scripts/make_results.py runs/code_exact --out results/code_exact --check
+
+Reads every finished run in the given directory, pools its baseline runs into the
+compute-ratio reference, and writes:
+
+    results.csv             one row per run: settings, raw losses, compute ratios
+    losses.csv              one row per (run, profile, dataset): every raw loss and its ratio
+    reference.csv           the fitted baseline curve of each dataset
+    per_module_ablation.csv for GRAM runs: the effect of ablating single modules
+    summary.csv             mean and 90% CI over seeds, per method and label setting
+
+``--check`` first re-evaluates every run from its saved checkpoint and stops if any
+stored loss is not reproduced. Runs that have never passed this check are listed.
+"""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import pandas as pd
+
+from gram.compute_ratio import mean_and_ci90
+from gram.results import build_tables, per_module_ablation, read_runs
+
+HEADLINE = ["cr_core", "cr_retain", "cr_forget", "cr_elicit_code", "cr_elicit_paper"]
+
+
+def summarise_over_seeds(results: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for (method, setting), group in results.groupby(["method", "label_setting"], sort=False):
+        row = {"method": method, "label_setting": setting, "seeds": len(group)}
+        for column in HEADLINE:
+            if column in group:
+                row[column], row[f"{column}_ci90"] = mean_and_ci90(group[column])
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("runs_dir", type=Path)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--check", action="store_true", help="re-evaluate every run from its checkpoint first")
+    args = parser.parse_args()
+
+    if args.check:
+        from gram.run import evaluate_run  # needs PyTorch and the data; the tables themselves do not
+
+        for run in read_runs(args.runs_dir):
+            evaluate_run(run["config"], check=True)
+        print()
+
+    results, losses, reference = build_tables(args.runs_dir)
+    args.out.mkdir(parents=True, exist_ok=True)
+    results.to_csv(args.out / "results.csv", index=False)
+    losses.to_csv(args.out / "losses.csv", index=False)
+    reference.describe().to_csv(args.out / "reference.csv", index=False)
+    summary = summarise_over_seeds(results)
+    summary.to_csv(args.out / "summary.csv", index=False)
+    if (losses.method == "gram").any():
+        aux = [column[len("cr_forget_"):] for column in results.columns if column.startswith("cr_forget_")]
+        per_module_ablation(losses, aux).to_csv(args.out / "per_module_ablation.csv", index=False)
+
+    with pd.option_context("display.width", 200, "display.max_columns", 20):
+        print(f"{len(results)} finished runs in {args.runs_dir}; reference pooled over "
+              f"{reference.num_baseline_seeds} baseline seed(s)\n")
+        print(reference.describe().round(4).to_string(index=False), "\n")
+        shown = ["run", "total_steps"] + [column for column in HEADLINE if column in results]
+        print(results[shown].round(4).to_string(index=False), "\n")
+        print(summary.round(4).to_string(index=False))
+
+    unchecked = results.loc[~results.checked_against_checkpoint, "run"].tolist()
+    if unchecked:
+        print(f"\nNOT YET RE-EVALUATED FROM THEIR CHECKPOINT ({len(unchecked)}): {', '.join(unchecked)}")
+        print("Run this script with --check before reporting these numbers.")
+    print(f"\nwrote {args.out}/")
+
+
+if __name__ == "__main__":
+    main()

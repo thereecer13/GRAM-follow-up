@@ -1,0 +1,15 @@
+# Environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Prepared data (rebuild with scripts/prepare_data.py)
+data/
+
+# Run outputs: checkpoints are large, so runs live outside git.
+# Small result tables and plots are committed from results/ instead.
+runs/
+*.pt
+*.bin
