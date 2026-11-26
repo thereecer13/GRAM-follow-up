@@ -65,6 +65,15 @@ def smoke() -> list[RunConfig]:
     return runs
 
 
+def smoke_compile() -> list[RunConfig]:
+    """The smoke set with torch.compile on: checks the whole pipeline with the compiled training step."""
+    runs = smoke()
+    for run in runs:
+        run.output_dir = "runs/smoke_compile"
+        run.optim.compile = True
+    return runs
+
+
 def smoke_cpu() -> list[RunConfig]:
     """The same pipeline on 1% of the data, cut down to run on a laptop CPU in half an hour.
 
@@ -102,6 +111,11 @@ def smoke_cpu() -> list[RunConfig]:
 # Stage 2: replicate the paper with complete, correct labels
 # --------------------------------------------------------------------------- #
 
+# The official runs used torch.compile, and on the RTX 4090 it nearly doubles training
+# speed (5.6 -> 10.6 steps per second). It changes speed, not what is computed.
+STAGE_2 = {"optim.compile": True}
+
+
 
 def code_exact(seeds=(1,)) -> list[RunConfig]:
     """The settings recorded in the official repository for the runs behind Table 1.
@@ -110,7 +124,7 @@ def code_exact(seeds=(1,)) -> list[RunConfig]:
     decay 0.01 (PyTorch's default; the official code never sets it), topics capped at
     the mean size of their class.
     """
-    return [run for seed in seeds for run in three_methods("code_exact", seed)]
+    return [run for seed in seeds for run in three_methods("code_exact", seed, **STAGE_2)]
 
 
 def paper_exact(seeds=(1,)) -> list[RunConfig]:
@@ -125,12 +139,14 @@ def paper_exact(seeds=(1,)) -> list[RunConfig]:
         "routing.equal_compute": False,
         "optim.weight_decay": 0.1,
         "data.cap_topics_at_class_mean": False,
+        **STAGE_2,
     }
     return [run for seed in seeds for run in three_methods("paper_exact", seed, **changes)]
 
 
 SETS = {
     "smoke": smoke,
+    "smoke_compile": smoke_compile,
     "smoke_cpu": smoke_cpu,
     "code_exact": code_exact,
     "paper_exact": paper_exact,

@@ -241,8 +241,11 @@ Small, deliberate, and none changes what is being measured.
 6. **One seed drives everything.** `CODE` shuffles the batch plan with the process rank
    (always 0 on one GPU) and the data with the run seed. Here the plan, the data order,
    the label split and the initialisation all derive from the run seed.
-7. **`torch.compile` is off by default** (`CODE`: on). It changes speed, not results;
-   `scripts/benchmark.py --compile` measures whether it is worth switching on.
+7. **`torch.compile` is off by default but on for Stage 2** (`CODE`: on). It changes
+   speed, not what is computed: on the rented RTX 4090 training went from 5.6 to 10.6
+   optimizer steps per second. Only the training step is compiled; evaluation, probes and
+   elicitation run uncompiled. The smoke runs of Stage 1 were made with it off, so the
+   `smoke_compile` set repeats them with it on before the long runs.
 8. **Evenly spaced measurement steps.** `CODE` sweeps every `round(N/200)` steps; here the
    200 sweeps are spread evenly and end on the last step.
 

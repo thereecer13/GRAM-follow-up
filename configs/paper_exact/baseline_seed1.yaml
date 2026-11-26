@@ -46,7 +46,7 @@ optim:
   batch_size: 128
   micro_batch_size: 128
   precision: bf16
-  compile: false
+  compile: true
 eval:
   batch_size: 256
   curve_points: 200
@@ -69,3 +69,4 @@ checkpoints:
 probes:
   enabled: true
   num_points: 20
+  chunk_size: 32
