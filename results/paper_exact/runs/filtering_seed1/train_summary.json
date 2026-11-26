@@ -1,0 +1,17 @@
+{
+  "total_steps": 15291,
+  "steps_in_this_call": 15291,
+  "seconds_training": 1443.8799080848694,
+  "seconds_measuring": 45.01103615760803,
+  "steps_per_second": 10.590215927501648,
+  "device": "cuda",
+  "torch_version": "2.8.0+cu128",
+  "peak_gpu_memory_gb": 10.488893952,
+  "fingerprint": {
+    "dense|core": 1.6868033409118652,
+    "dense|a-deadline-or-time-limit": 1.892048954963684,
+    "dense|alien-encounters": 1.7787730693817139,
+    "dense|bygone-eras": 1.8115617036819458,
+    "dense|cultural-traditions": 1.7944247722625732
+  }
+}

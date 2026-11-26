@@ -1,0 +1,86 @@
+{
+  "method": "filtering",
+  "total_steps": 15291,
+  "micro_batches": 15291,
+  "accumulation_steps": 1,
+  "rules": [
+    {
+      "name": "dense",
+      "pool": "core",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 15291
+    }
+  ],
+  "count_by_rule_name": {
+    "dense": 15291
+  },
+  "pools": {
+    "core": {
+      "sequences": 1959605,
+      "micro_batches_per_pass": 15291
+    },
+    "a-deadline-or-time-limit": {
+      "sequences": 45410,
+      "micro_batches_per_pass": 354
+    },
+    "alien-encounters": {
+      "sequences": 44282,
+      "micro_batches_per_pass": 345
+    },
+    "bygone-eras": {
+      "sequences": 45305,
+      "micro_batches_per_pass": 353
+    },
+    "cultural-traditions": {
+      "sequences": 45427,
+      "micro_batches_per_pass": 354
+    }
+  },
+  "notes": {
+    "pools": [
+      "core",
+      "unlabeled"
+    ],
+    "micro_batches": 15291
+  },
+  "checkpoint_steps": [
+    0,
+    1529,
+    3058,
+    4587,
+    6116,
+    7646,
+    9175,
+    10704,
+    12233,
+    13762
+  ],
+  "probe_steps": [
+    765,
+    1529,
+    2294,
+    3058,
+    3823,
+    4587,
+    5352,
+    6116,
+    6881,
+    7646,
+    8410,
+    9175,
+    9939,
+    10704,
+    11468,
+    12233,
+    12997,
+    13762,
+    14526,
+    15291
+  ],
+  "warnings": []
+}

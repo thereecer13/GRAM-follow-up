@@ -1,0 +1,133 @@
+{
+  "method": "baseline",
+  "total_steps": 16697,
+  "micro_batches": 16697,
+  "accumulation_steps": 1,
+  "rules": [
+    {
+      "name": "dense",
+      "pool": "core",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 15291
+    },
+    {
+      "name": "dense",
+      "pool": "a-deadline-or-time-limit",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 354
+    },
+    {
+      "name": "dense",
+      "pool": "alien-encounters",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 345
+    },
+    {
+      "name": "dense",
+      "pool": "bygone-eras",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 353
+    },
+    {
+      "name": "dense",
+      "pool": "cultural-traditions",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 354
+    }
+  ],
+  "count_by_rule_name": {
+    "dense": 16697
+  },
+  "pools": {
+    "core": {
+      "sequences": 1959605,
+      "micro_batches_per_pass": 15291
+    },
+    "a-deadline-or-time-limit": {
+      "sequences": 45410,
+      "micro_batches_per_pass": 354
+    },
+    "alien-encounters": {
+      "sequences": 44282,
+      "micro_batches_per_pass": 345
+    },
+    "bygone-eras": {
+      "sequences": 45305,
+      "micro_batches_per_pass": 353
+    },
+    "cultural-traditions": {
+      "sequences": 45427,
+      "micro_batches_per_pass": 354
+    }
+  },
+  "notes": {
+    "pools": [
+      "core",
+      "a-deadline-or-time-limit",
+      "alien-encounters",
+      "bygone-eras",
+      "cultural-traditions"
+    ],
+    "micro_batches": 16697
+  },
+  "checkpoint_steps": [
+    0,
+    1670,
+    3339,
+    5009,
+    6679,
+    8348,
+    10018,
+    11688,
+    13358,
+    15027
+  ],
+  "probe_steps": [
+    835,
+    1670,
+    2505,
+    3339,
+    4174,
+    5009,
+    5844,
+    6679,
+    7514,
+    8348,
+    9183,
+    10018,
+    10853,
+    11688,
+    12523,
+    13358,
+    14192,
+    15027,
+    15862,
+    16697
+  ],
+  "warnings": []
+}

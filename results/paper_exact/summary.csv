@@ -1,0 +1,4 @@
+method,label_setting,seeds,cr_core,cr_core_ci90,cr_retain,cr_retain_ci90,cr_forget,cr_forget_ci90,cr_elicit_code,cr_elicit_code_ci90,cr_elicit_paper,cr_elicit_paper_ci90
+baseline,labeled=1,1,1.0,,,,1.0,,1.0063347871243589,,0.9921487236807502,
+filtering,labeled=1,1,0.9576573274817584,,,,0.7540027449307017,,0.8466394901868901,,0.8061205163545,
+gram,labeled=1,1,0.9275070623981184,,0.9555924514698892,,0.731135373190483,,0.8268471645007354,,0.7827066241018452,

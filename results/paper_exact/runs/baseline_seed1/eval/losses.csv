@@ -1,0 +1,6 @@
+profile,active,dataset,loss,num_sequences
+dense,core,core,1.7022015956370875,205967
+dense,core,a-deadline-or-time-limit,1.797676704645596,4887
+dense,core,alien-encounters,1.6752541846242444,4640
+dense,core,bygone-eras,1.7250250902500228,4793
+dense,core,cultural-traditions,1.765268905671908,4730
