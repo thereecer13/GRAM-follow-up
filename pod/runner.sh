@@ -27,6 +27,8 @@ ln -sfn "$LOGS" "$SHARE/logs"
 ln -sfn "$STATE" "$SHARE/state"
 
 cd "$REPO"
+# The container disk is wiped whenever the pod is stopped, so install on every start.
+pip install -q -e ".[dev]" || pip install -q --break-system-packages -e ".[dev]"
 (cd "$SHARE" && exec python -m http.server 8000 >/dev/null 2>&1) &
 
 failed_at=""   # the commit at which a job failed; nothing runs until the branch moves on
