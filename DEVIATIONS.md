@@ -298,6 +298,22 @@ the unrounded 1946 / 26.
 The rules themselves need no deviation: unlabeled data is core for filtering, and
 everything-active-and-updated for GRAM, as in App. G.
 
+**Step counts under equal compute — DECIDED (Reece, 2026-11-26: keep equal compute).**
+Appendix I's length rescaling, which code-exact follows, charges a batch by the number of
+parameters it updates. An unlabeled batch updates the core and all four modules, so the
+more data is unlabeled, the fewer steps GRAM is given: 16,050 at fraction 1, 14,580 at
+0.5, 13,587 at 0.1 and 13,378 at 0.01, while filtering rises from 15,171 to 16,559 and
+the baseline has 16,572 (seed 1, mixed batches). At low fractions GRAM therefore trains on
+about 19% less data than filtering. `PAPER` App. A and the brief say "same steps for all
+methods"; the equal-compute condition is kept because it is the one that reproduced
+Table 1. To separate the effect of missing labels from the effect of shorter training,
+seed 1 has one extra GRAM run at fraction 0.01 with `equal_compute: false`
+(`gram_f0.01_samesteps_seed1`; label setting "labeled=0.01, same steps"). It is an
+addition, not part of the brief.
+
+Stage 3 also keeps Stage 2's `torch.compile` setting and evaluates every GRAM run under
+all ten capability profiles.
+
 ---
 
 ## 5. Additions to the paper (requested in the brief), and the choices they left open

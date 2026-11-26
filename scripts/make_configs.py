@@ -144,12 +144,65 @@ def paper_exact(seeds=(1,)) -> list[RunConfig]:
     return [run for seed in seeds for run in three_methods("paper_exact", seed, **changes)]
 
 
+# --------------------------------------------------------------------------- #
+# Stage 3: incomplete labels
+# --------------------------------------------------------------------------- #
+
+LABELED_FRACTIONS = (1.0, 0.5, 0.1, 0.01)
+
+# Everything else is the code-exact condition of Stage 2. Batches are mixed (drawn from
+# all topics with the same given label) because single-topic batches cannot represent
+# unlabeled data, whose topic the method is not supposed to know.
+STAGE_3 = {"data.batch_assembly": "mixed", **STAGE_2}
+
+
+def label_runs(set_name: str, seed: int, fractions=LABELED_FRACTIONS, **changes) -> list[RunConfig]:
+    """One seed of Stage 3: a baseline, and filtering and GRAM at every labeled fraction.
+
+    The baseline ignores labels, so one baseline serves every fraction. The split into
+    labeled and unlabeled stories depends only on the seed and the fraction, so filtering
+    and GRAM at the same fraction see exactly the same labels.
+    """
+    runs = [make(set_name, f"baseline_seed{seed}", "baseline", seed, **{"eval.curve_points": 200, **changes})]
+    for method in ("filtering", "gram"):
+        for fraction in fractions:
+            name = f"{method}_f{fraction:g}_seed{seed}"
+            runs.append(make(set_name, name, method, seed, **{"labels.labeled_fraction": fraction, **changes}))
+    return runs
+
+
+def stage3(seeds=(1,)) -> list[RunConfig]:
+    """Labeled fractions 1, 0.5, 0.1 and 0.01 for filtering and GRAM, with a shared baseline per seed.
+
+    With equal compute on, GRAM is given fewer steps the more of its data is unlabeled
+    (an unlabeled batch updates every module, so it is charged as more compute): 16,050
+    steps at fraction 1 but 13,378 at 0.01. To tell the effect of missing labels from the
+    effect of shorter training, seed 1 also has one GRAM run at fraction 0.01 that trains
+    for as many steps as the baseline.
+    """
+    runs = [run for seed in seeds for run in label_runs("stage3", seed, **STAGE_3)]
+    control = {"labels.labeled_fraction": 0.01, "routing.equal_compute": False, **STAGE_3}
+    runs.append(make("stage3", "gram_f0.01_samesteps_seed1", "gram", 1, **control))
+    return runs
+
+
+def stage3_smoke() -> list[RunConfig]:
+    """Stage 3's code path (mixed batches, unlabeled data, compiled) on 1% of the data."""
+    changes = {"data.train_fraction": 0.01, "data.val_fraction": 0.05, "eval.curve_points": 20, **STAGE_3}
+    runs = label_runs("stage3_smoke", 1, fractions=(0.1,), **changes)
+    for run in runs[1:]:
+        run.eval.curve_points = 0
+    return runs
+
+
 SETS = {
     "smoke": smoke,
     "smoke_compile": smoke_compile,
     "smoke_cpu": smoke_cpu,
     "code_exact": code_exact,
     "paper_exact": paper_exact,
+    "stage3": stage3,
+    "stage3_smoke": stage3_smoke,
 }
 
 

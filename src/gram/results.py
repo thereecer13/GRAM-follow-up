@@ -43,7 +43,11 @@ def label_setting(config: RunConfig) -> str:
     """A short name for a run's label condition, for tables and plots."""
     if config.labels.noise != "none":
         return f"{config.labels.noise}={config.labels.noise_rate:g}"
-    return f"labeled={config.labels.labeled_fraction:g}"
+    setting = f"labeled={config.labels.labeled_fraction:g}"
+    # Stage 3's control run: GRAM with unlabeled data, trained for as long as the baseline.
+    if config.method == "gram" and config.labels.labeled_fraction < 1 and not config.routing.equal_compute:
+        setting += ", same steps"
+    return setting
 
 
 def read_run(run_dir: Path) -> dict | None:
