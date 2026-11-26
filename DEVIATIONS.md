@@ -189,7 +189,7 @@ method" (`PAPER` App. A, and the brief) does not hold for filtering in either co
 each auxiliary dataset (1842 / 1806 / 1842 / 1842 batches in the Table 1 run). Following
 `CODE`; the shares are computed from the pools of the *given* labels.
 
-### 2.8 Batches are single-topic in `CODE` — OPEN for Stages 3 and 4
+### 2.8 Batches are single-topic in `CODE` — DECIDED (mixed for Stages 3 and 4)
 
 `CODE` has one data loader per topic file and draws each batch from one loader. So every
 batch holds a single topic, including core batches (one of the 44 core topics at a time)
@@ -213,9 +213,8 @@ This is harmless for Stage 2, but it bears directly on Stages 3 and 4:
   none of the mislabeled stories would be trained on at all. The training loop warns when
   this happens.
 
-**Recommendation:** `mixed` for Stages 3 and 4, with their own `mixed` baseline and
-`labeled=1` runs as anchors, and Stage 2's `single_topic` runs kept as the replication.
-Needs a decision before Stage 3.
+**Decision (Reece, 2026-11-26):** `mixed` for Stages 3 and 4, with their own `mixed`
+baseline and `labeled=1` runs as anchors. Stage 2 stays `single_topic`, as the replication.
 
 ---
 
@@ -273,7 +272,7 @@ for Stage 2.
 Per-topic forget ratios differ a lot (GRAM, authors' data: deadlines 0.61, aliens 0.69,
 cultural traditions 0.85, bygone eras 0.90), so results are always saved per topic.
 
-### 4.2 Stage 3: labelled fractions and routing probabilities — OPEN
+### 4.2 Stage 3: labelled fractions and routing probabilities — DECIDED (stories values)
 
 `PAPER` App. G is a 400M-parameter experiment on the realistic corpus at one labelled
 fraction (50%), with `p_as = 0.5`, `p_cr = 0.2`, `p_af = 3` to `4`, and a resized
@@ -285,8 +284,9 @@ The brief sweeps `f ∈ {1.0, 0.5, 0.1, 0.01}` on Simple Stories at 26M with the
 settings (`p_as = 0.3`, `p_cr = 0.5`, `p_af = 1`, modules 2048/192) as the primary
 condition, and the 95% / 1.25% resize as an option. So Stage 3 is an extension, not a
 replication, and its one paper-comparable point differs in scale, corpus, module sizes and
-both routing probabilities. To decide before Stage 3: whether to add a condition with the
-paper's partial-labelling probabilities, and section 2.8.
+both routing probabilities. **Decision (Reece, 2026-11-26):** Stage 3 uses the
+stories values `p_as = 0.3`, `p_cr = 0.5` throughout; no condition with the paper's
+partial-labelling probabilities.
 
 On the resize: 95% and 1.25% of 2048 are 1946 and 26. `CODE` rounds widths to multiples
 of 64, which would make the module width **0** at this model size, so the option will use
@@ -326,7 +326,7 @@ of those at 20%. This was not requested; it reduces noise between conditions.
 * Gradients are computed on a float32 copy of the model (same weights, more precise
   arithmetic; training itself is bfloat16), in chunks to bound memory.
 * **The mismatched-module control in the brief is ambiguous**, so both readings are
-  recorded. For topic *i* and module *j ≠ i*, the unlabeled-rule gradient of module *j*
+  recorded (kept on Reece's decision, 2026-11-26). For topic *i* and module *j ≠ i*, the unlabeled-rule gradient of module *j*
   from topic *i*'s batch A is compared with (1) the gradient module *j* gets when topic
   *i*'s batch B is run as if labeled *j* (`cos_unlabeled_vs_labeled`: "topic i's batch,
   module j's parameters", read literally), and (2) the gradient module *j* gets from its
@@ -374,8 +374,5 @@ training dynamics, which Stage 2 will test by comparing final losses and compute
 
 ## 7. Open questions
 
-1. **2.8** Batch assembly for Stages 3 and 4: `single_topic` (as `CODE`) or `mixed`
-   (recommended).
-2. **4.2** Whether Stage 3 should include a condition with the paper's partial-labelling
-   routing probabilities.
-3. **5.3** Which reading of the mismatched-module control was intended (both are recorded).
+1. **5.1** Whether keeping optimizer state in all eleven checkpoints (about 80 GB through
+   Stage 4's first pass) fits the disk of the training machine.
