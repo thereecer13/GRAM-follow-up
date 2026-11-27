@@ -171,7 +171,7 @@ def label_runs(set_name: str, seed: int, fractions=LABELED_FRACTIONS, **changes)
     return runs
 
 
-def stage3(seeds=(1,)) -> list[RunConfig]:
+def stage3(seeds=(1, 2, 3)) -> list[RunConfig]:
     """Labeled fractions 1, 0.5, 0.1 and 0.01 for filtering and GRAM, with a shared baseline per seed.
 
     With equal compute on, GRAM is given fewer steps the more of its data is unlabeled

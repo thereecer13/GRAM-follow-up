@@ -68,13 +68,21 @@ def main() -> None:
     parser.add_argument("runs_dir", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--check", action="store_true", help="re-evaluate every run from its checkpoint first")
+    parser.add_argument(
+        "--check-new", action="store_true",
+        help="like --check, but skip runs that already passed it (their eval/check.json exists)",
+    )
     args = parser.parse_args()
 
-    if args.check:
+    if args.check or args.check_new:
         from gram.run import evaluate_run  # needs PyTorch and the data; the tables themselves do not
 
         for run in read_runs(args.runs_dir):
-            evaluate_run(run["config"], check=True)
+            config = run["config"]
+            if args.check_new and (config.run_dir / "eval" / "check.json").exists():
+                print(f"checked  {config.name}: passed the re-evaluation earlier")
+                continue
+            evaluate_run(config, check=True)
         print()
 
     results, losses, reference = build_tables(args.runs_dir)
