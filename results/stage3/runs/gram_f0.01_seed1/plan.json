@@ -1,0 +1,278 @@
+{
+  "method": "gram",
+  "total_steps": 13378,
+  "micro_batches": 13378,
+  "accumulation_steps": 1,
+  "rules": [
+    {
+      "name": "core_plain",
+      "pool": "core",
+      "active": [
+        "core"
+      ],
+      "update": [
+        "core"
+      ],
+      "count": 61
+    },
+    {
+      "name": "aux_isolated",
+      "pool": "a-deadline-or-time-limit",
+      "active": [
+        "core",
+        "a-deadline-or-time-limit"
+      ],
+      "update": [
+        "a-deadline-or-time-limit"
+      ],
+      "count": 1
+    },
+    {
+      "name": "aux_spread",
+      "pool": "a-deadline-or-time-limit",
+      "active": [
+        "core",
+        "a-deadline-or-time-limit"
+      ],
+      "update": [
+        "core",
+        "a-deadline-or-time-limit"
+      ],
+      "count": 1
+    },
+    {
+      "name": "core_robust",
+      "pool": "core",
+      "active": [
+        "core",
+        "a-deadline-or-time-limit"
+      ],
+      "update": [
+        "core",
+        "a-deadline-or-time-limit"
+      ],
+      "count": 15
+    },
+    {
+      "name": "aux_isolated",
+      "pool": "alien-encounters",
+      "active": [
+        "core",
+        "alien-encounters"
+      ],
+      "update": [
+        "alien-encounters"
+      ],
+      "count": 1
+    },
+    {
+      "name": "aux_spread",
+      "pool": "alien-encounters",
+      "active": [
+        "core",
+        "alien-encounters"
+      ],
+      "update": [
+        "core",
+        "alien-encounters"
+      ],
+      "count": 1
+    },
+    {
+      "name": "core_robust",
+      "pool": "core",
+      "active": [
+        "core",
+        "alien-encounters"
+      ],
+      "update": [
+        "core",
+        "alien-encounters"
+      ],
+      "count": 15
+    },
+    {
+      "name": "aux_isolated",
+      "pool": "bygone-eras",
+      "active": [
+        "core",
+        "bygone-eras"
+      ],
+      "update": [
+        "bygone-eras"
+      ],
+      "count": 1
+    },
+    {
+      "name": "aux_spread",
+      "pool": "bygone-eras",
+      "active": [
+        "core",
+        "bygone-eras"
+      ],
+      "update": [
+        "core",
+        "bygone-eras"
+      ],
+      "count": 1
+    },
+    {
+      "name": "core_robust",
+      "pool": "core",
+      "active": [
+        "core",
+        "bygone-eras"
+      ],
+      "update": [
+        "core",
+        "bygone-eras"
+      ],
+      "count": 15
+    },
+    {
+      "name": "aux_isolated",
+      "pool": "cultural-traditions",
+      "active": [
+        "core",
+        "cultural-traditions"
+      ],
+      "update": [
+        "cultural-traditions"
+      ],
+      "count": 1
+    },
+    {
+      "name": "aux_spread",
+      "pool": "cultural-traditions",
+      "active": [
+        "core",
+        "cultural-traditions"
+      ],
+      "update": [
+        "core",
+        "cultural-traditions"
+      ],
+      "count": 1
+    },
+    {
+      "name": "core_robust",
+      "pool": "core",
+      "active": [
+        "core",
+        "cultural-traditions"
+      ],
+      "update": [
+        "core",
+        "cultural-traditions"
+      ],
+      "count": 15
+    },
+    {
+      "name": "unlabeled",
+      "pool": "unlabeled",
+      "active": [
+        "core",
+        "a-deadline-or-time-limit",
+        "alien-encounters",
+        "bygone-eras",
+        "cultural-traditions"
+      ],
+      "update": [
+        "core",
+        "a-deadline-or-time-limit",
+        "alien-encounters",
+        "bygone-eras",
+        "cultural-traditions"
+      ],
+      "count": 13249
+    }
+  ],
+  "count_by_rule_name": {
+    "core_plain": 61,
+    "aux_isolated": 4,
+    "aux_spread": 4,
+    "core_robust": 60,
+    "unlabeled": 13249
+  },
+  "pools": {
+    "core": {
+      "sequences": 19501,
+      "micro_batches_per_pass": 152
+    },
+    "a-deadline-or-time-limit": {
+      "sequences": 456,
+      "micro_batches_per_pass": 3
+    },
+    "alien-encounters": {
+      "sequences": 447,
+      "micro_batches_per_pass": 3
+    },
+    "bygone-eras": {
+      "sequences": 453,
+      "micro_batches_per_pass": 3
+    },
+    "cultural-traditions": {
+      "sequences": 466,
+      "micro_batches_per_pass": 3
+    },
+    "unlabeled": {
+      "sequences": 2100185,
+      "micro_batches_per_pass": 16407
+    }
+  },
+  "notes": {
+    "before_equal_compute": {
+      "core_only_mode": 76,
+      "module_mode": 88,
+      "unlabeled": 16407
+    },
+    "equal_compute": {
+      "lambda": 0.8074937843637708,
+      "core_only_mode": 61,
+      "module_mode": 71,
+      "unlabeled": 13249
+    },
+    "module_share": {
+      "a-deadline-or-time-limit": 0.25,
+      "alien-encounters": 0.25,
+      "bygone-eras": 0.25,
+      "cultural-traditions": 0.25
+    },
+    "micro_batches": 13378
+  },
+  "checkpoint_steps": [
+    0,
+    1338,
+    2676,
+    4013,
+    5351,
+    6689,
+    8027,
+    9365,
+    10702,
+    12040
+  ],
+  "probe_steps": [
+    669,
+    1338,
+    2007,
+    2676,
+    3344,
+    4013,
+    4682,
+    5351,
+    6020,
+    6689,
+    7358,
+    8027,
+    8696,
+    9365,
+    10034,
+    10702,
+    11371,
+    12040,
+    12709,
+    13378
+  ],
+  "warnings": []
+}
