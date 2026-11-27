@@ -7,6 +7,7 @@ by ``scripts/make_results.py``) and writes, into ``<results>/plots/``:
 
 * ``forget_vs_fraction.png``       forget and elicited forget against the labeled fraction
 * ``core_retain_vs_fraction.png``  core and retain against the labeled fraction
+* ``selectivity_vs_fraction.png``  is the forgetting selective? core against the topics, for both methods
 * ``probes_labeled_<f>.png``       one per labeled fraction: the gradient probes of the GRAM run(s)
 
 In the first two, every seed is drawn as a point and the line joins the means over seeds.
@@ -97,6 +98,73 @@ def metric_figure(results: pd.DataFrame, panels: list[tuple[str, str, tuple[str,
 
 
 # --------------------------------------------------------------------------- #
+# Is the forgetting selective?
+# --------------------------------------------------------------------------- #
+
+MEASURE_COLORS = {"core": "#257de0", "topics": "#f47230", "full": "#00b894"}
+
+
+def selectivity_figure(results: pd.DataFrame, losses: pd.DataFrame, path: Path) -> None:
+    """Core data against the auxiliary topics, as labels are removed.
+
+    A method forgets selectively when the topics (orange) sit well below core data
+    (blue). Three panels: the filtered model; GRAM with every module removed; GRAM with
+    only one module removed, scored on that module's topic and on the other three.
+    """
+    fractions = sorted(results.labeled_fraction.unique(), reverse=True)
+    position = {fraction: index for index, fraction in enumerate(fractions)}
+    main = results[~results.label_setting.str.endswith(SAME_STEPS)]
+
+    def draw(axis, table: pd.DataFrame, column: str, color: str, label: str) -> None:
+        means = table.groupby("labeled_fraction")[column].mean().reindex(fractions).dropna()
+        xs = [position[fraction] for fraction in means.index]
+        axis.plot(xs, means.values, color=color, linewidth=2, label=label)
+        axis.scatter([position[f] for f in table.labeled_fraction], table[column], s=36, color=color, edgecolor="white", linewidth=1, zorder=3)
+
+    figure, axes = plt.subplots(1, 3, figsize=(14.5, 4.6), sharey=True)
+
+    filtering = main[main.method == "filtering"]
+    draw(axes[0], filtering, "cr_core", MEASURE_COLORS["core"], "core data")
+    draw(axes[0], filtering, "cr_forget", MEASURE_COLORS["topics"], "the 4 topics")
+    style(axes[0], "Filtering", "compute ratio")
+
+    gram = main[main.method == "gram"]
+    gram_losses = losses[(losses.method == "gram") & ~losses.label_setting.str.endswith(SAME_STEPS)]
+    gram_losses = gram_losses.merge(results[["run", "labeled_fraction"]], on="run")
+    full = gram_losses[(gram_losses.profile == "all_modules") & (gram_losses.dataset == CORE)].rename(columns={"compute_ratio": "cr_full"})
+    draw(axes[1], full, "cr_full", MEASURE_COLORS["full"], "core data, all modules on")
+    draw(axes[1], gram, "cr_core", MEASURE_COLORS["core"], "core data")
+    draw(axes[1], gram, "cr_forget", MEASURE_COLORS["topics"], "the 4 topics")
+    style(axes[1], "GRAM, every module removed")
+
+    single = gram_losses[gram_losses.profile.str.startswith("without:") & (gram_losses.dataset != CORE)]
+    removed = single.profile.str.removeprefix("without:")
+    own = single[single.dataset == removed].groupby(["run", "labeled_fraction"], as_index=False).compute_ratio.mean()
+    other = single[single.dataset != removed].groupby(["run", "labeled_fraction"], as_index=False).compute_ratio.mean()
+    draw(axes[2], other, "compute_ratio", MEASURE_COLORS["core"], "the other 3 topics")
+    draw(axes[2], own, "compute_ratio", MEASURE_COLORS["topics"], "the removed module's topic")
+    style(axes[2], "GRAM, one module removed")
+
+    for axis in axes:
+        axis.axhline(1.0, color=GRAY, linewidth=1, linestyle="--")
+        axis.set_xticks(range(len(fractions)), [f"{fraction:g}" for fraction in fractions])
+        axis.set_xlim(-0.3, len(fractions) - 0.7)
+        axis.set_xlabel("labeled fraction")
+        axis.legend(frameon=False, fontsize=9, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3)
+    axes[0].annotate("baseline", (0, 1.0), xytext=(0, 4), textcoords="offset points", fontsize=8, color=GRAY)
+
+    seeds = sorted(results.seed.unique())
+    figure.suptitle(
+        "Is the forgetting selective? A gap between blue and orange means the topics are removed and the rest is kept"
+        f"   (seeds: {', '.join(map(str, seeds))})",
+        fontsize=10, x=0.01, ha="left",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.94))
+    figure.savefig(path, dpi=160)
+    plt.close(figure)
+
+
+# --------------------------------------------------------------------------- #
 # Gradient probes
 # --------------------------------------------------------------------------- #
 
@@ -173,6 +241,9 @@ def main() -> None:
         "Core and retain: higher is better",
         plots / "core_retain_vs_fraction.png",
     )
+
+    losses = pd.read_csv(args.results_dir / "losses.csv")
+    selectivity_figure(results, losses, plots / "selectivity_vs_fraction.png")
 
     probes = pd.read_parquet(args.results_dir / "gradient_probes.parquet")
     probes = probes[probes.method == "gram"]
