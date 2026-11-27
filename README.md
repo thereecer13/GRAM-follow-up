@@ -21,6 +21,8 @@ differ.
 
 This is the whole method, so it is worth being exact about.
 
+![The GRAM model, one block in detail, and what each kind of batch updates](docs/architecture.png)
+
 ### The groups
 
 GRAM's parameters are divided into five groups. Each group has its own AdamW optimizer.
