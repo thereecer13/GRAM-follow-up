@@ -1,6 +1,6 @@
-name: gram_f1_seed2
+name: gram_f0.1_smallmodules_seed1
 method: gram
-seed: 2
+seed: 1
 output_dir: runs/stage3
 device: auto
 data:
@@ -15,7 +15,7 @@ data:
   cap_topics_at_class_mean: true
   batch_assembly: mixed
 labels:
-  labeled_fraction: 1.0
+  labeled_fraction: 0.1
   noise: none
   noise_rate: 0.0
 model:
@@ -27,8 +27,8 @@ model:
   d_model: 512
   eos_token_id: 1
   dense_mlp_dim: 2048
-  core_mlp_dim: 2048
-  aux_mlp_dim: 192
+  core_mlp_dim: 1946
+  aux_mlp_dim: 26
 routing:
   p_cr: 0.5
   p_as: 0.3

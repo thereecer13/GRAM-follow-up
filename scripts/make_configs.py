@@ -171,18 +171,31 @@ def label_runs(set_name: str, seed: int, fractions=LABELED_FRACTIONS, **changes)
     return runs
 
 
-def stage3(seeds=(1, 2, 3)) -> list[RunConfig]:
-    """Labeled fractions 1, 0.5, 0.1 and 0.01 for filtering and GRAM, with a shared baseline per seed.
+def stage3() -> list[RunConfig]:
+    """Labeled fractions 1, 0.5, 0.1 and 0.01 for filtering and GRAM (seed 1), with controls.
 
-    With equal compute on, GRAM is given fewer steps the more of its data is unlabeled
-    (an unlabeled batch updates every module, so it is charged as more compute): 16,050
-    steps at fraction 1 but 13,378 at 0.01. To tell the effect of missing labels from the
-    effect of shorter training, seed 1 also has one GRAM run at fraction 0.01 that trains
-    for as many steps as the baseline.
+    Seed 1 is complete. Seeds 2 and 3 were stopped early (2026-11-28) once it was clear
+    they could not change the conclusion; what had finished is kept: both baselines, which
+    make the compute-ratio reference a three-seed pool, and filtering at fraction 0.01.
+
+    Two control runs, both GRAM on seed 1:
+
+    * ``samesteps``: fraction 0.01 trained for as many steps as the baseline. With equal
+      compute on, GRAM gets fewer steps the more of its data is unlabeled (16,050 at
+      fraction 1, 13,378 at 0.01), and this separates that from the effect of the labels.
+    * ``smallmodules``: fraction 0.1 with the module sizes the paper found necessary for
+      partial labeling (Appendix G): the core MLP at 95% of the baseline's width and each
+      module at 1.25%, here 1946 and 26. Tests whether large modules are what makes the
+      core depend on them.
     """
-    runs = [run for seed in seeds for run in label_runs("stage3", seed, **STAGE_3)]
-    control = {"labels.labeled_fraction": 0.01, "routing.equal_compute": False, **STAGE_3}
-    runs.append(make("stage3", "gram_f0.01_samesteps_seed1", "gram", 1, **control))
+    runs = label_runs("stage3", 1, **STAGE_3)
+    for seed in (2, 3):
+        runs.append(make("stage3", f"baseline_seed{seed}", "baseline", seed, **{"eval.curve_points": 200, **STAGE_3}))
+        runs.append(make("stage3", f"filtering_f0.01_seed{seed}", "filtering", seed, **{"labels.labeled_fraction": 0.01, **STAGE_3}))
+    same_steps = {"labels.labeled_fraction": 0.01, "routing.equal_compute": False, **STAGE_3}
+    runs.append(make("stage3", "gram_f0.01_samesteps_seed1", "gram", 1, **same_steps))
+    small = {"labels.labeled_fraction": 0.1, "model.core_mlp_dim": 1946, "model.aux_mlp_dim": 26, **STAGE_3}
+    runs.append(make("stage3", "gram_f0.1_smallmodules_seed1", "gram", 1, **small))
     return runs
 
 

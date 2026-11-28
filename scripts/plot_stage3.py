@@ -32,7 +32,17 @@ COLORS = {"filtering": "#257de0", "gram": "#f47230"}
 NAMES = {"filtering": "Filtering", "gram": "GRAM"}
 PROBE_COLORS = {"matched": "#257de0", "core": "#f47230", "mismatched": "#00b894"}
 GRAY = "#666666"
-SAME_STEPS = ", same steps"
+
+# Control runs carry a suffix after the labeled fraction in their label setting, e.g.
+# "labeled=0.01, same steps". They are drawn as hollow markers, never joined into the lines.
+CONTROLS = {
+    "same steps": ("same steps as the baseline", "o"),
+    "small modules": ("small modules (core 95%, each module 1.25%)", "s"),
+}
+
+
+def is_control(label_setting: pd.Series) -> pd.Series:
+    return label_setting.str.contains(", ", regex=False)
 
 
 def style(axis, title: str, ylabel: str | None = None) -> None:
@@ -57,8 +67,7 @@ def plot_metric(axis, results: pd.DataFrame, column: str, methods: tuple[str, ..
 
     for method in methods:
         runs = results[(results.method == method) & results[column].notna()]
-        main = runs[~runs.label_setting.str.endswith(SAME_STEPS)]
-        control = runs[runs.label_setting.str.endswith(SAME_STEPS)]
+        main = runs[~is_control(runs.label_setting)]
         if main.empty:
             continue
         means = main.groupby("labeled_fraction")[column].mean()
@@ -69,12 +78,14 @@ def plot_metric(axis, results: pd.DataFrame, column: str, methods: tuple[str, ..
             [position[fraction] for fraction in main.labeled_fraction], main[column],
             s=36, color=COLORS[method], edgecolor="white", linewidth=1, zorder=3,
         )
-        if not control.empty:
-            axis.scatter(
-                [position[fraction] for fraction in control.labeled_fraction], control[column],
-                s=44, facecolor="white", edgecolor=COLORS[method], linewidth=1.8, zorder=3,
-                label=f"{NAMES[method]}, same steps as the baseline",
-            )
+        for suffix, (description, marker) in CONTROLS.items():
+            control = runs[runs.label_setting.str.endswith(", " + suffix)]
+            if not control.empty:
+                axis.scatter(
+                    [position[fraction] for fraction in control.labeled_fraction], control[column],
+                    s=48, marker=marker, facecolor="white", edgecolor=COLORS[method], linewidth=1.8, zorder=3,
+                    label=f"{NAMES[method]}, {description}",
+                )
 
     axis.axhline(1.0, color=GRAY, linewidth=1, linestyle="--", label="Baseline")
     axis.set_xticks(range(len(fractions)), [f"{fraction:g}" for fraction in fractions])
@@ -113,7 +124,7 @@ def selectivity_figure(results: pd.DataFrame, losses: pd.DataFrame, path: Path) 
     """
     fractions = sorted(results.labeled_fraction.unique(), reverse=True)
     position = {fraction: index for index, fraction in enumerate(fractions)}
-    main = results[~results.label_setting.str.endswith(SAME_STEPS)]
+    main = results[~is_control(results.label_setting)]
 
     def draw(axis, table: pd.DataFrame, column: str, color: str, label: str) -> None:
         means = table.groupby("labeled_fraction")[column].mean().reindex(fractions).dropna()
@@ -129,7 +140,7 @@ def selectivity_figure(results: pd.DataFrame, losses: pd.DataFrame, path: Path) 
     style(axes[0], "Filtering", "compute ratio")
 
     gram = main[main.method == "gram"]
-    gram_losses = losses[(losses.method == "gram") & ~losses.label_setting.str.endswith(SAME_STEPS)]
+    gram_losses = losses[(losses.method == "gram") & ~is_control(losses.label_setting)]
     gram_losses = gram_losses.merge(results[["run", "labeled_fraction"]], on="run")
     full = gram_losses[(gram_losses.profile == "all_modules") & (gram_losses.dataset == CORE)].rename(columns={"compute_ratio": "cr_full"})
     draw(axes[1], full, "cr_full", MEASURE_COLORS["full"], "core data, all modules on")
@@ -248,7 +259,7 @@ def main() -> None:
     probes = pd.read_parquet(args.results_dir / "gradient_probes.parquet")
     probes = probes[probes.method == "gram"]
     for setting, rows in probes.groupby("label_setting", sort=False):
-        name = setting.replace("=", "_").replace(", ", "_").replace(" ", "_")
+        name = setting.replace("=", "_").replace(", ", "_").replace(" ", "_").replace("/", "-")
         probe_figure(rows, setting, plots / f"probes_{name}.png")
     print(f"wrote {len(list(plots.glob('*.png')))} plots to {plots}")
 

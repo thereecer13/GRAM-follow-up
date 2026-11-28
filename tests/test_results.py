@@ -1,5 +1,6 @@
 """From run directories to result tables."""
 
+import dataclasses
 import numpy as np
 import pandas as pd
 import pytest
@@ -108,3 +109,9 @@ def test_label_setting_names(tmp_path):
     assert label_setting(tiny_run_config(tmp_path, labels__labeled_fraction=0.01)) == "labeled=0.01"
     noisy = tiny_run_config(tmp_path, labels__noise="false_negative", labels__noise_rate=0.2)
     assert label_setting(noisy) == "false_negative=0.2"
+    # The two control runs of Stage 3 are told apart from the main runs by a suffix.
+    same_steps = tiny_run_config(tmp_path, labels__labeled_fraction=0.01, routing__equal_compute=False)
+    assert label_setting(same_steps) == "labeled=0.01, same steps"
+    small = tiny_run_config(tmp_path, labels__labeled_fraction=0.1)
+    small.model = dataclasses.replace(small.model, aux_mlp_dim=1)  # under 5% of the dense MLP's width
+    assert label_setting(small) == "labeled=0.1, small modules"

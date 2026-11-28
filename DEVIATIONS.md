@@ -314,6 +314,24 @@ addition, not part of the brief.
 Stage 3 also keeps Stage 2's `torch.compile` setting and evaluates every GRAM run under
 all ten capability profiles.
 
+**Seeds 2 and 3 stopped early — DECIDED (Reece, 2026-11-28).** The brief asks for three
+seeds across the four fractions. After seed 1 the effects (0.2 to 0.4 in compute ratio)
+were ten times the seed-to-seed spread seen in Stage 2, so two more seeds could not have
+changed the conclusion, and they were stopped after 5.4 hours. What had finished is kept:
+the baselines of seeds 2 and 3, which make the compute-ratio reference a three-seed pool
+as in `PAPER`, and filtering at fraction 0.01 for both seeds. Every GRAM number in Stage 3
+is therefore a single seed.
+
+**Small-modules control — an addition (2026-11-28).** `PAPER` App. G says its partial-
+labeling result needed a resized architecture: the core MLP at 95% of the baseline's MLP
+width and each module at 1.25%. `gram_f0.1_smallmodules_seed1` repeats GRAM at fraction
+0.1 with those sizes (1946 and 26, unrounded as explained above) and nothing else changed
+on purpose. Two things change with it as a consequence and are confounded with module
+size: the equal-compute rescaling gives this model 16,598 steps where the standard model
+at fraction 0.1 gets 13,587 (its parameter count is almost exactly the baseline's), and
+the core MLP is 5% narrower. The routing probabilities stay at the stories values, not
+the `p_as = 0.5`, `p_cr = 0.2` of App. G.
+
 ---
 
 ## 5. Additions to the paper (requested in the brief), and the choices they left open

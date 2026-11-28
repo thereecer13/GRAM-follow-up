@@ -39,6 +39,10 @@ from gram.compute_ratio import Reference, build_reference
 from gram.config import CORE, RunConfig, load_config
 
 
+# A module narrower than this share of the dense model's MLP counts as "small" in the tables.
+SMALL_MODULE_SHARE = 0.05
+
+
 def label_setting(config: RunConfig) -> str:
     """A short name for a run's label condition, for tables and plots."""
     if config.labels.noise != "none":
@@ -47,6 +51,10 @@ def label_setting(config: RunConfig) -> str:
     # Stage 3's control run: GRAM with unlabeled data, trained for as long as the baseline.
     if config.method == "gram" and config.labels.labeled_fraction < 1 and not config.routing.equal_compute:
         setting += ", same steps"
+    # Stage 3's other control: the small modules of the paper's partial-labeling experiment
+    # (1.25% of the dense MLP's width, where the standard modules are 9.4%).
+    if config.method == "gram" and config.model.aux_mlp_dim < SMALL_MODULE_SHARE * config.model.dense_mlp_dim:
+        setting += ", small modules"
     return setting
 
 
