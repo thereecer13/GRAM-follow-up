@@ -1,0 +1,37 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+layer_ablation       180 rows in  331.8 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.0 s
+topic_probes          48 rows in   57.7 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/stage3/gram_f1_seed1/
+layer_ablation       180 rows in  331.9 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.0 s
+topic_probes          48 rows in   54.2 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/stage3/gram_f0.5_seed1/
+layer_ablation       180 rows in  331.7 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.0 s
+topic_probes          48 rows in   54.1 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/stage3/gram_f0.1_seed1/
+layer_ablation       180 rows in  331.8 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.0 s
+topic_probes          48 rows in   55.4 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/stage3/gram_f0.01_seed1/
+layer_ablation       180 rows in  331.8 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.0 s
+topic_probes          48 rows in   49.3 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/stage3/gram_f0.01_samesteps_seed1/
+layer_ablation       180 rows in  331.7 s
+token_effects      29431 rows in   28.6 s
+output_norms         200 rows in    9.1 s
+topic_probes          48 rows in   49.1 s
+direct_writes        800 rows in    9.0 s
+wrote results/interp/code_exact/gram_seed1/

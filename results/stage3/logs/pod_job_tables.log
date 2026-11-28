@@ -1,0 +1,55 @@
+checked  baseline_seed1: passed the re-evaluation earlier
+ok       baseline_seed2: 5 losses re-evaluated from the checkpoint, largest difference 0.00e+00
+ok       baseline_seed3: 5 losses re-evaluated from the checkpoint, largest difference 0.00e+00
+checked  filtering_f0.01_seed1: passed the re-evaluation earlier
+ok       filtering_f0.01_seed2: 5 losses re-evaluated from the checkpoint, largest difference 0.00e+00
+ok       filtering_f0.01_seed3: 5 losses re-evaluated from the checkpoint, largest difference 0.00e+00
+checked  filtering_f0.1_seed1: passed the re-evaluation earlier
+checked  filtering_f0.5_seed1: passed the re-evaluation earlier
+checked  filtering_f1_seed1: passed the re-evaluation earlier
+checked  gram_f0.01_samesteps_seed1: passed the re-evaluation earlier
+checked  gram_f0.01_seed1: passed the re-evaluation earlier
+checked  gram_f0.1_seed1: passed the re-evaluation earlier
+checked  gram_f0.5_seed1: passed the re-evaluation earlier
+checked  gram_f1_seed1: passed the re-evaluation earlier
+14 finished runs in runs/stage3; reference pooled over 3 baseline seed(s)
+                 dataset      A  alpha       s0  fit_rms_log_error  denominator_steps  baseline_final_loss_mean  num_baseline_seeds
+                    core 5.3776 0.1202 -80.6688             0.0238         19152.5691                    1.6443                   3
+a-deadline-or-time-limit 5.6448 0.1195 -79.9919             0.0227         19186.6750                    1.7381                   3
+        alien-encounters 5.4709 0.1232 -80.3967             0.0247         18974.6519                    1.6261                   3
+             bygone-eras 5.5145 0.1213 -80.3733             0.0234         19315.2314                    1.6674                   3
+     cultural-traditions 5.5344 0.1194 -80.3555             0.0230         19280.1871                    1.7043                   3 
+                       run  total_steps  cr_core  cr_retain  cr_forget  cr_elicit_code  cr_elicit_paper
+            baseline_seed1        16572   0.9922        NaN     0.9950          1.0253           1.0093
+            baseline_seed2        16572   0.9995        NaN     1.0023          1.0371           1.0165
+            baseline_seed3        16572   1.0083        NaN     1.0027          1.0401           1.0202
+     filtering_f0.01_seed1        16559   0.9992        NaN     1.0155          1.0442           1.0283
+     filtering_f0.01_seed2        16559   1.0047        NaN     1.0226          1.0527           1.0353
+     filtering_f0.01_seed3        16559   1.0206        NaN     1.0399          1.0716           1.0538
+      filtering_f0.1_seed1        16433   0.9971        NaN     1.0038          1.0360           1.0147
+      filtering_f0.5_seed1        15871   0.9842        NaN     0.9347          0.9757           0.9525
+        filtering_f1_seed1        15171   0.9615        NaN     0.7669          0.8600           0.8246
+gram_f0.01_samesteps_seed1        16571   0.6426     0.7520     0.6416          0.7193           0.6818
+          gram_f0.01_seed1        13378   0.5862     0.6879     0.5877          0.6613           0.6245
+           gram_f0.1_seed1        13587   0.7923     0.8440     0.7402          0.8111           0.7826
+           gram_f0.5_seed1        14580   0.9076     0.9429     0.7809          0.8680           0.8319
+             gram_f1_seed1        16050   0.9507     0.9640     0.7483          0.8447           0.8031 
+   method            label_setting  seeds  cr_core  cr_core_ci90  cr_retain  cr_retain_ci90  cr_forget  cr_forget_ci90  cr_elicit_code  cr_elicit_code_ci90  cr_elicit_paper  cr_elicit_paper_ci90
+ baseline                labeled=1      3   1.0000        0.0135        NaN             NaN     1.0000          0.0073          1.0342               0.0132           1.0153                0.0093
+filtering             labeled=0.01      3   1.0082        0.0187        NaN             NaN     1.0260          0.0212          1.0561               0.0237           1.0391                0.0222
+filtering              labeled=0.1      1   0.9971           NaN        NaN             NaN     1.0038             NaN          1.0360                  NaN           1.0147                   NaN
+filtering              labeled=0.5      1   0.9842           NaN        NaN             NaN     0.9347             NaN          0.9757                  NaN           0.9525                   NaN
+filtering                labeled=1      1   0.9615           NaN        NaN             NaN     0.7669             NaN          0.8600                  NaN           0.8246                   NaN
+     gram labeled=0.01, same steps      1   0.6426           NaN     0.7520             NaN     0.6416             NaN          0.7193                  NaN           0.6818                   NaN
+     gram             labeled=0.01      1   0.5862           NaN     0.6879             NaN     0.5877             NaN          0.6613                  NaN           0.6245                   NaN
+     gram              labeled=0.1      1   0.7923           NaN     0.8440             NaN     0.7402             NaN          0.8111                  NaN           0.7826                   NaN
+     gram              labeled=0.5      1   0.9076           NaN     0.9429             NaN     0.7809             NaN          0.8680                  NaN           0.8319                   NaN
+     gram                labeled=1      1   0.9507           NaN     0.9640             NaN     0.7483             NaN          0.8447                  NaN           0.8031                   NaN
+wrote results/stage3/
+5.1G	/workspace/GRAM-follow-up/runs/code_exact
+5.0G	/workspace/GRAM-follow-up/runs/paper_exact
+5.0G	/workspace/GRAM-follow-up/runs/smoke
+5.0G	/workspace/GRAM-follow-up/runs/smoke_compile
+26G	/workspace/GRAM-follow-up/runs/stage3
+5.0G	/workspace/GRAM-follow-up/runs/stage3_smoke
+mfs#euro-3.runpod.net:9421  2.2P  1.7P  504T  78% /workspace
