@@ -331,6 +331,8 @@ size: the equal-compute rescaling gives this model 16,598 steps where the standa
 at fraction 0.1 gets 13,587 (its parameter count is almost exactly the baseline's), and
 the core MLP is 5% narrower. The routing probabilities stay at the stories values, not
 the `p_as = 0.5`, `p_cr = 0.2` of App. G.
+The same control was then added at fractions 0.5 (the setting of App. G) and 1.0 (no
+unlabeled data: does a 26-wide module hold a routed topic at all?).
 
 ---
 

@@ -183,7 +183,7 @@ def stage3() -> list[RunConfig]:
     * ``samesteps``: fraction 0.01 trained for as many steps as the baseline. With equal
       compute on, GRAM gets fewer steps the more of its data is unlabeled (16,050 at
       fraction 1, 13,378 at 0.01), and this separates that from the effect of the labels.
-    * ``smallmodules``: fraction 0.1 with the module sizes the paper found necessary for
+    * ``smallmodules``: fractions 1, 0.5 and 0.1 with the module sizes the paper found necessary for
       partial labeling (Appendix G): the core MLP at 95% of the baseline's width and each
       module at 1.25%, here 1946 and 26. Tests whether large modules are what makes the
       core depend on them.
@@ -194,8 +194,9 @@ def stage3() -> list[RunConfig]:
         runs.append(make("stage3", f"filtering_f0.01_seed{seed}", "filtering", seed, **{"labels.labeled_fraction": 0.01, **STAGE_3}))
     same_steps = {"labels.labeled_fraction": 0.01, "routing.equal_compute": False, **STAGE_3}
     runs.append(make("stage3", "gram_f0.01_samesteps_seed1", "gram", 1, **same_steps))
-    small = {"labels.labeled_fraction": 0.1, "model.core_mlp_dim": 1946, "model.aux_mlp_dim": 26, **STAGE_3}
-    runs.append(make("stage3", "gram_f0.1_smallmodules_seed1", "gram", 1, **small))
+    for fraction in (1.0, 0.5, 0.1):
+        small = {"labels.labeled_fraction": fraction, "model.core_mlp_dim": 1946, "model.aux_mlp_dim": 26, **STAGE_3}
+        runs.append(make("stage3", f"gram_f{fraction:g}_smallmodules_seed1", "gram", 1, **small))
     return runs
 
 
