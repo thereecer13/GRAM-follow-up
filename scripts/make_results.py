@@ -39,6 +39,7 @@ SMALL_FILES = [
     "config.yaml", "plan.json", "cells.csv", "train_summary.json", "log.txt",
     "metrics/train.parquet", "metrics/validation_curve.parquet", "probes/gradient_probes.parquet",
     "eval/losses.csv", "eval/elicitation.csv", "eval/elicitation_curves.csv", "eval/check.json",
+    "DONE",  # so that the exported copy can itself be read by this script
 ]
 
 
